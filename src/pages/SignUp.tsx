@@ -1,11 +1,61 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { ROUTES } from "@/lib/routes";
-import { ArrowLeft } from "lucide-react";
+import { signUpSchema, SignUpFormData, getPasswordStrength } from "@/lib/validations";
+import { ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function SignUp() {
+  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+  const form = useForm<SignUpFormData>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+    },
+  });
+
+  const password = form.watch("password");
+  const passwordStrength = getPasswordStrength(password || "");
+
+  const onSubmit = async (data: SignUpFormData) => {
+    if (!agreedToTerms) {
+      toast.error("Please agree to the terms of service");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // TODO: Implement Supabase signup
+      console.log("Sign up data:", data);
+      toast.success("Account created successfully!");
+      navigate(ROUTES.ONBOARDING);
+    } catch (error) {
+      toast.error("Failed to create account. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
@@ -24,26 +74,134 @@ export default function SignUp() {
           <p className="text-muted-foreground">Start planning your dream trips today</p>
         </div>
 
-        <form className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input id="name" placeholder="Enter your name" className="h-12" />
-          </div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Full Name</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Enter your name" 
+                      className="h-12" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="Enter your email" className="h-12" />
-          </div>
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="email" 
+                      placeholder="Enter your email" 
+                      className="h-12" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" placeholder="Create a password" className="h-12" />
-          </div>
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input 
+                        type={showPassword ? "text" : "password"} 
+                        placeholder="Create a password" 
+                        className="h-12 pr-12" 
+                        {...field} 
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-12 w-12"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                  </FormControl>
+                  {password && password.length > 0 && (
+                    <div className="space-y-2 pt-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Password strength</span>
+                        <span className={`font-medium ${
+                          passwordStrength.score >= 60 ? "text-green-600" : "text-muted-foreground"
+                        }`}>
+                          {passwordStrength.label}
+                        </span>
+                      </div>
+                      <Progress 
+                        value={passwordStrength.score} 
+                        className="h-1.5"
+                      />
+                    </div>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <Button type="submit" size="lg" className="w-full h-14 text-lg font-semibold">
-            Create Account
-          </Button>
-        </form>
+            <div className="flex items-start space-x-3">
+              <Checkbox 
+                id="terms" 
+                checked={agreedToTerms}
+                onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
+                className="mt-0.5"
+              />
+              <label 
+                htmlFor="terms" 
+                className="text-sm text-muted-foreground leading-relaxed cursor-pointer"
+              >
+                I agree to the{" "}
+                <button type="button" className="text-primary hover:underline">
+                  Terms of Service
+                </button>{" "}
+                and{" "}
+                <button type="button" className="text-primary hover:underline">
+                  Privacy Policy
+                </button>
+              </label>
+            </div>
+
+            <Button 
+              type="submit" 
+              size="lg" 
+              className="w-full h-14 text-lg font-semibold"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Creating Account...
+                </>
+              ) : (
+                "Create Account"
+              )}
+            </Button>
+          </form>
+        </Form>
 
         <div className="text-center text-sm text-muted-foreground">
           Already have an account?{" "}
