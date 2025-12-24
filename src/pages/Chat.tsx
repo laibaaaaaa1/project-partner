@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { Send, Sparkles, Mic, Trash2, MoreVertical } from "lucide-react";
 import { MobileLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -19,13 +19,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-}
+import { useState } from "react";
+import { useAIChat } from "@/hooks/useAIChat";
 
 const suggestedQuestions = [
   "What are the best beaches in Bali?",
@@ -38,52 +33,29 @@ const formatTime = (date: Date) => {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
 
+const initialMessage = {
+  id: "1",
+  role: "assistant" as const,
+  content:
+    "Hi! I'm your AI travel coach. I can help you discover destinations, plan itineraries, and provide travel tips. What would you like to explore today?",
+  timestamp: new Date(),
+};
+
 export default function Chat() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content:
-        "Hi! I'm your AI travel coach. I can help you discover destinations, plan itineraries, and provide travel tips. What would you like to explore today?",
-      timestamp: new Date(),
-    },
-  ]);
+  const { messages, isLoading, sendMessage, clearMessages } = useAIChat([initialMessage]);
   const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isTyping]);
+  }, [messages, isLoading]);
 
   const handleSend = () => {
-    if (!input.trim()) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: input,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    if (!input.trim() || isLoading) return;
+    sendMessage(input);
     setInput("");
-    setIsTyping(true);
-
-    // TODO: Replace with actual AI response
-    setTimeout(() => {
-      setIsTyping(false);
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content:
-          "Thanks for your question! I'm currently in demo mode. Once connected to the AI backend, I'll provide personalized travel recommendations based on your preferences.",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, aiMessage]);
-    }, 1500);
   };
 
   const handleSuggestionClick = (question: string) => {
@@ -92,15 +64,11 @@ export default function Chat() {
   };
 
   const handleClearConversation = () => {
-    setMessages([
-      {
-        id: Date.now().toString(),
-        role: "assistant",
-        content:
-          "Hi! I'm your AI travel coach. I can help you discover destinations, plan itineraries, and provide travel tips. What would you like to explore today?",
-        timestamp: new Date(),
-      },
-    ]);
+    clearMessages({
+      ...initialMessage,
+      id: Date.now().toString(),
+      timestamp: new Date(),
+    });
     setShowClearDialog(false);
   };
 
@@ -155,7 +123,7 @@ export default function Chat() {
                     </span>
                   </div>
                 )}
-                <p className="text-sm leading-relaxed">{message.content}</p>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
                 <p
                   className={`text-[10px] mt-1 ${
                     message.role === "user"
@@ -170,7 +138,7 @@ export default function Chat() {
           ))}
 
           {/* Typing Indicator */}
-          {isTyping && (
+          {isLoading && messages[messages.length - 1]?.role === "user" && (
             <div className="flex justify-start animate-fade-in">
               <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
                 <div className="flex items-center gap-2 mb-1">
@@ -238,13 +206,13 @@ export default function Chat() {
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
               placeholder="Ask me anything about travel..."
               className="flex-1 h-12"
-              disabled={isTyping}
+              disabled={isLoading}
             />
             <Button
               size="icon"
               className="h-12 w-12 shrink-0"
               onClick={handleSend}
-              disabled={!input.trim() || isTyping}
+              disabled={!input.trim() || isLoading}
             >
               <Send className="h-5 w-5" />
             </Button>
