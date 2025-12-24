@@ -4,7 +4,6 @@ import {
   ArrowLeft, 
   Calendar, 
   Users, 
-  DollarSign, 
   Sparkles, 
   MapPin,
   Loader2,
@@ -19,8 +18,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
-import { ROUTES, generateRoute } from "@/lib/routes";
+import { ROUTES } from "@/lib/routes";
 import { toast } from "sonner";
+import { useItineraryGeneration } from "@/hooks/useItineraryGeneration";
 
 const travelStyles = [
   { id: "adventure", label: "Adventure", icon: Mountain, description: "Hiking & exploration" },
@@ -39,7 +39,7 @@ const popularDestinations = [
 export default function CreateTrip() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const { isGenerating, progress: generationProgress, generateItinerary } = useItineraryGeneration();
   
   // Form state
   const [destination, setDestination] = useState("");
@@ -50,7 +50,7 @@ export default function CreateTrip() {
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
 
   const totalSteps = 5;
-  const progress = (step / totalSteps) * 100;
+  const stepProgress = (step / totalSteps) * 100;
 
   const handleNext = () => {
     if (step < totalSteps) {
@@ -67,16 +67,20 @@ export default function CreateTrip() {
   };
 
   const handleGenerate = async () => {
-    setIsGenerating(true);
-    try {
-      // TODO: Call AI to generate itinerary
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API call
+    if (!selectedStyle) return;
+    
+    const result = await generateItinerary({
+      destination,
+      startDate,
+      endDate,
+      travelers,
+      budget: budget[0],
+      travelStyle: selectedStyle,
+    });
+
+    if (result) {
       toast.success("Itinerary generated successfully!");
-      navigate(generateRoute.trip("new-trip-id"));
-    } catch (error) {
-      toast.error("Failed to generate itinerary. Please try again.");
-    } finally {
-      setIsGenerating(false);
+      navigate("/itinerary", { state: { itinerary: result } });
     }
   };
 
@@ -107,14 +111,14 @@ export default function CreateTrip() {
     <div className="min-h-screen flex flex-col bg-background pt-safe">
       {/* Header */}
       <div className="px-4 py-4 flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={handleBack}>
+        <Button variant="ghost" size="icon" onClick={handleBack} disabled={isGenerating}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <Progress value={progress} className="h-2" />
+          <Progress value={isGenerating ? generationProgress : stepProgress} className="h-2" />
         </div>
         <span className="text-sm text-muted-foreground font-medium">
-          {step}/{totalSteps}
+          {isGenerating ? `${generationProgress}%` : `${step}/${totalSteps}`}
         </span>
       </div>
 

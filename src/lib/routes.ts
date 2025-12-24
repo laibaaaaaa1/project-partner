@@ -14,6 +14,7 @@ export const ROUTES = {
   PROFILE: "/profile",
   SETTINGS: "/settings",
   ITINERARY: "/itinerary/:tripId",
+  GENERATED_ITINERARY: "/itinerary",
   OFFLINE: "/offline",
 } as const;
 

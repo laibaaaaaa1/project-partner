@@ -22,6 +22,7 @@ import Chat from "./pages/Chat";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Offline from "./pages/Offline";
+import GeneratedItinerary from "./pages/GeneratedItinerary";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,7 @@ const App = () => (
           <Route path={ROUTES.TRIPS} element={<ProtectedRoute><Trips /></ProtectedRoute>} />
           <Route path={ROUTES.TRIP} element={<ProtectedRoute><TripDetails /></ProtectedRoute>} />
           <Route path={ROUTES.CREATE_TRIP} element={<ProtectedRoute><CreateTrip /></ProtectedRoute>} />
+          <Route path={ROUTES.GENERATED_ITINERARY} element={<ProtectedRoute><GeneratedItinerary /></ProtectedRoute>} />
           <Route path={ROUTES.ITINERARY} element={<ProtectedRoute><TripDetails /></ProtectedRoute>} />
           <Route path={ROUTES.CHAT} element={<ProtectedRoute><Chat /></ProtectedRoute>} />
           <Route path={ROUTES.PROFILE} element={<ProtectedRoute><Profile /></ProtectedRoute>} />
