@@ -1,5 +1,8 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
+import { EDGE_FUNCTIONS, SUPABASE_ANON_KEY } from "@/lib/supabase-config";
+
+export type ActivityType = "activity" | "meal" | "transport" | "accommodation";
 
 export interface TripActivity {
   time: string;
@@ -8,7 +11,7 @@ export interface TripActivity {
   duration: string;
   cost?: string;
   location?: string;
-  type: "activity" | "meal" | "transport" | "accommodation";
+  type: ActivityType;
 }
 
 export interface ItineraryDay {
@@ -31,7 +34,7 @@ export interface GeneratedItinerary {
   tips: string[];
 }
 
-interface TripParams {
+export interface TripParams {
   destination: string;
   startDate: string;
   endDate: string;
@@ -40,13 +43,15 @@ interface TripParams {
   travelStyle: string;
 }
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/travel-chat`;
-
-const ITINERARY_PROMPT = (params: TripParams): string => {
-  const days = Math.ceil(
-    (new Date(params.endDate).getTime() - new Date(params.startDate).getTime()) /
+function calculateTripDays(startDate: string, endDate: string): number {
+  return Math.ceil(
+    (new Date(endDate).getTime() - new Date(startDate).getTime()) /
       (1000 * 60 * 60 * 24)
   ) + 1;
+}
+
+function createItineraryPrompt(params: TripParams): string {
+  const days = calculateTripDays(params.startDate, params.endDate);
 
   return `Generate a detailed ${days}-day travel itinerary for ${params.destination}.
 
@@ -83,7 +88,31 @@ Please respond ONLY with valid JSON in this exact format (no markdown, no code b
 Types for activities: "activity", "meal", "transport", "accommodation"
 
 Make the itinerary realistic with proper timing. Include meals, key attractions, local experiences, and rest time. Ensure costs roughly align with the total budget of $${params.budget} for ${params.travelers} travelers.`;
-};
+}
+
+function parseAIResponse(content: string): { days: ItineraryDay[]; packingList: string[]; tips: string[] } {
+  let cleanedContent = content.trim();
+  
+  // Remove markdown code blocks if present
+  if (cleanedContent.startsWith("```json")) {
+    cleanedContent = cleanedContent.slice(7);
+  } else if (cleanedContent.startsWith("```")) {
+    cleanedContent = cleanedContent.slice(3);
+  }
+  if (cleanedContent.endsWith("```")) {
+    cleanedContent = cleanedContent.slice(0, -3);
+  }
+  cleanedContent = cleanedContent.trim();
+
+  // Find JSON object bounds
+  const jsonStart = cleanedContent.indexOf("{");
+  const jsonEnd = cleanedContent.lastIndexOf("}");
+  if (jsonStart !== -1 && jsonEnd !== -1) {
+    cleanedContent = cleanedContent.slice(jsonStart, jsonEnd + 1);
+  }
+
+  return JSON.parse(cleanedContent);
+}
 
 export function useItineraryGeneration() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -95,15 +124,15 @@ export function useItineraryGeneration() {
     setProgress(10);
 
     try {
-      const prompt = ITINERARY_PROMPT(params);
+      const prompt = createItineraryPrompt(params);
       
       setProgress(20);
 
-      const response = await fetch(CHAT_URL, {
+      const response = await fetch(EDGE_FUNCTIONS.travelChat, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           messages: [{ role: "user", content: prompt }],
@@ -186,39 +215,14 @@ export function useItineraryGeneration() {
 
       setProgress(90);
 
-      // Clean and parse the JSON response
-      let cleanedContent = fullContent.trim();
-      
-      // Remove markdown code blocks if present
-      if (cleanedContent.startsWith("```json")) {
-        cleanedContent = cleanedContent.slice(7);
-      } else if (cleanedContent.startsWith("```")) {
-        cleanedContent = cleanedContent.slice(3);
-      }
-      if (cleanedContent.endsWith("```")) {
-        cleanedContent = cleanedContent.slice(0, -3);
-      }
-      cleanedContent = cleanedContent.trim();
-
-      // Find JSON object bounds
-      const jsonStart = cleanedContent.indexOf("{");
-      const jsonEnd = cleanedContent.lastIndexOf("}");
-      if (jsonStart !== -1 && jsonEnd !== -1) {
-        cleanedContent = cleanedContent.slice(jsonStart, jsonEnd + 1);
-      }
-
-      const parsedItinerary = JSON.parse(cleanedContent);
-
-      const days = Math.ceil(
-        (new Date(params.endDate).getTime() - new Date(params.startDate).getTime()) /
-          (1000 * 60 * 60 * 24)
-      ) + 1;
+      const parsedItinerary = parseAIResponse(fullContent);
+      const totalDays = calculateTripDays(params.startDate, params.endDate);
 
       const result: GeneratedItinerary = {
         destination: params.destination,
         startDate: params.startDate,
         endDate: params.endDate,
-        totalDays: days,
+        totalDays,
         travelers: params.travelers,
         budget: params.budget,
         travelStyle: params.travelStyle,

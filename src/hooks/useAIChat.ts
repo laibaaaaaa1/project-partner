@@ -1,23 +1,27 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
+import { EDGE_FUNCTIONS, SUPABASE_ANON_KEY } from "@/lib/supabase-config";
 
-interface Message {
+export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
 }
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/travel-chat`;
+interface ApiMessage {
+  role: "user" | "assistant";
+  content: string;
+}
 
-export function useAIChat(initialMessages: Message[] = []) {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+export function useAIChat(initialMessages: ChatMessage[] = []) {
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [isLoading, setIsLoading] = useState(false);
 
   const sendMessage = useCallback(async (userContent: string) => {
     if (!userContent.trim()) return;
 
-    const userMessage: Message = {
+    const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: "user",
       content: userContent,
@@ -28,7 +32,7 @@ export function useAIChat(initialMessages: Message[] = []) {
     setIsLoading(true);
 
     // Prepare messages for API (only role and content)
-    const apiMessages = [...messages, userMessage].map((m) => ({
+    const apiMessages: ApiMessage[] = [...messages, userMessage].map((m) => ({
       role: m.role,
       content: m.content,
     }));
@@ -36,11 +40,11 @@ export function useAIChat(initialMessages: Message[] = []) {
     let assistantContent = "";
 
     try {
-      const response = await fetch(CHAT_URL, {
+      const response = await fetch(EDGE_FUNCTIONS.travelChat, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({ messages: apiMessages }),
       });
@@ -151,7 +155,7 @@ export function useAIChat(initialMessages: Message[] = []) {
     }
   }, [messages]);
 
-  const clearMessages = useCallback((initialMessage: Message) => {
+  const clearMessages = useCallback((initialMessage: ChatMessage) => {
     setMessages([initialMessage]);
   }, []);
 
