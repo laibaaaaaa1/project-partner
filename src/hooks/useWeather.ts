@@ -1,7 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-interface CurrentWeather {
+export interface CurrentWeather {
   temp: number;
   condition: string;
   icon: string;
@@ -9,7 +9,7 @@ interface CurrentWeather {
   wind: number;
 }
 
-interface ForecastDay {
+export interface ForecastDay {
   date: string;
   day: string;
   temp: number;
@@ -17,24 +17,24 @@ interface ForecastDay {
   icon: string;
 }
 
-interface WeatherData {
+export interface WeatherData {
   location: string;
   current: CurrentWeather;
   forecast: ForecastDay[];
 }
 
-export function useWeather() {
+export function useWeather(location: string | null = null) {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchWeather = useCallback(async (location: string) => {
+  const fetchWeather = useCallback(async (loc: string) => {
     setIsLoading(true);
     setError(null);
 
     try {
       const { data, error: fetchError } = await supabase.functions.invoke("get-weather", {
-        body: { location },
+        body: { location: loc },
       });
 
       if (fetchError) {
@@ -53,10 +53,23 @@ export function useWeather() {
     }
   }, []);
 
+  useEffect(() => {
+    if (location) {
+      fetchWeather(location);
+    }
+  }, [location, fetchWeather]);
+
+  const refresh = useCallback(() => {
+    if (location) {
+      fetchWeather(location);
+    }
+  }, [location, fetchWeather]);
+
   return {
     weather,
     isLoading,
     error,
     fetchWeather,
+    refresh,
   };
 }
