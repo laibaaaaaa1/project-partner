@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,12 +18,21 @@ import { ROUTES } from "@/lib/routes";
 import { signUpSchema, SignUpFormData, getPasswordStrength } from "@/lib/validations";
 import { ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function SignUp() {
   const navigate = useNavigate();
+  const { signUp, user, isLoading: authLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && !authLoading) {
+      navigate(ROUTES.DASHBOARD, { replace: true });
+    }
+  }, [user, authLoading, navigate]);
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
@@ -45,16 +54,35 @@ export default function SignUp() {
 
     setIsLoading(true);
     try {
-      // TODO: Implement Supabase signup
-      console.log("Sign up data:", data);
-      toast.success("Account created successfully!");
+      const { error } = await signUp(data.email, data.password, data.name);
+      
+      if (error) {
+        if (error.message.includes("User already registered")) {
+          toast.error("An account with this email already exists. Please sign in instead.");
+        } else if (error.message.includes("Password")) {
+          toast.error("Password is too weak. Please use a stronger password.");
+        } else {
+          toast.error(error.message);
+        }
+        return;
+      }
+      
+      toast.success("Account created! Please check your email to verify your account.");
       navigate(ROUTES.ONBOARDING);
-    } catch (error) {
+    } catch {
       toast.error("Failed to create account. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
