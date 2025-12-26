@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { InstallPrompt } from "@/components/pwa";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SuspenseFallback } from "@/components/SuspenseFallback";
+import { AuthProvider } from "@/hooks/useAuth";
 
 // Lazy load pages for better performance
 const Landing = lazy(() => import("./pages/Landing"));
@@ -42,39 +43,41 @@ const queryClient = new QueryClient({
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Suspense fallback={<SuspenseFallback />}>
-            <Routes>
-              {/* Public Routes */}
-              <Route path={ROUTES.LANDING} element={<Landing />} />
-              <Route path={ROUTES.SIGNUP} element={<SignUp />} />
-              <Route path={ROUTES.SIGNIN} element={<SignIn />} />
-              <Route path={ROUTES.ONBOARDING} element={<Onboarding />} />
-              <Route path={ROUTES.OFFLINE} element={<Offline />} />
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Suspense fallback={<SuspenseFallback />}>
+              <Routes>
+                {/* Public Routes */}
+                <Route path={ROUTES.LANDING} element={<Landing />} />
+                <Route path={ROUTES.SIGNUP} element={<SignUp />} />
+                <Route path={ROUTES.SIGNIN} element={<SignIn />} />
+                <Route path={ROUTES.ONBOARDING} element={<Onboarding />} />
+                <Route path={ROUTES.OFFLINE} element={<Offline />} />
 
-              {/* Protected Routes */}
-              <Route path={ROUTES.DASHBOARD} element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path={ROUTES.DISCOVER} element={<ProtectedRoute><Discover /></ProtectedRoute>} />
-              <Route path={ROUTES.DESTINATION} element={<ProtectedRoute><DestinationDetails /></ProtectedRoute>} />
-              <Route path={ROUTES.TRIPS} element={<ProtectedRoute><Trips /></ProtectedRoute>} />
-              <Route path={ROUTES.TRIP} element={<ProtectedRoute><TripDetails /></ProtectedRoute>} />
-              <Route path={ROUTES.CREATE_TRIP} element={<ProtectedRoute><CreateTrip /></ProtectedRoute>} />
-              <Route path={ROUTES.GENERATED_ITINERARY} element={<ProtectedRoute><GeneratedItinerary /></ProtectedRoute>} />
-              <Route path={ROUTES.ITINERARY} element={<ProtectedRoute><TripDetails /></ProtectedRoute>} />
-              <Route path={ROUTES.CHAT} element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-              <Route path={ROUTES.PROFILE} element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path={ROUTES.SETTINGS} element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                {/* Protected Routes */}
+                <Route path={ROUTES.DASHBOARD} element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path={ROUTES.DISCOVER} element={<ProtectedRoute><Discover /></ProtectedRoute>} />
+                <Route path={ROUTES.DESTINATION} element={<ProtectedRoute><DestinationDetails /></ProtectedRoute>} />
+                <Route path={ROUTES.TRIPS} element={<ProtectedRoute><Trips /></ProtectedRoute>} />
+                <Route path={ROUTES.TRIP} element={<ProtectedRoute><TripDetails /></ProtectedRoute>} />
+                <Route path={ROUTES.CREATE_TRIP} element={<ProtectedRoute><CreateTrip /></ProtectedRoute>} />
+                <Route path={ROUTES.GENERATED_ITINERARY} element={<ProtectedRoute><GeneratedItinerary /></ProtectedRoute>} />
+                <Route path={ROUTES.ITINERARY} element={<ProtectedRoute><TripDetails /></ProtectedRoute>} />
+                <Route path={ROUTES.CHAT} element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+                <Route path={ROUTES.PROFILE} element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path={ROUTES.SETTINGS} element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
-              {/* Catch-all */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-          <InstallPrompt />
-        </BrowserRouter>
-      </TooltipProvider>
+                {/* Catch-all */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+            <InstallPrompt />
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   </ErrorBoundary>
 );

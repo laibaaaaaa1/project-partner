@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -25,15 +25,27 @@ import { ROUTES } from "@/lib/routes";
 import { signInSchema, SignInFormData, emailSchema } from "@/lib/validations";
 import { ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 export default function SignIn() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { signIn, resetPassword, user, isLoading: authLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [isResetting, setIsResetting] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && !authLoading) {
+      const from = (location.state as { from?: { pathname: string } })?.from?.pathname || ROUTES.DASHBOARD;
+      navigate(from, { replace: true });
+    }
+  }, [user, authLoading, navigate, location.state]);
 
   const form = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -46,12 +58,24 @@ export default function SignIn() {
   const onSubmit = async (data: SignInFormData) => {
     setIsLoading(true);
     try {
-      // TODO: Implement Supabase signin
-      console.log("Sign in data:", data, "Remember me:", rememberMe);
+      const { error } = await signIn(data.email, data.password);
+      
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          toast.error("Invalid email or password. Please try again.");
+        } else if (error.message.includes("Email not confirmed")) {
+          toast.error("Please verify your email before signing in.");
+        } else {
+          toast.error(error.message);
+        }
+        return;
+      }
+      
       toast.success("Welcome back!");
-      navigate(ROUTES.DASHBOARD);
-    } catch (error) {
-      toast.error("Invalid email or password. Please try again.");
+      const from = (location.state as { from?: { pathname: string } })?.from?.pathname || ROUTES.DASHBOARD;
+      navigate(from, { replace: true });
+    } catch {
+      toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -66,17 +90,30 @@ export default function SignIn() {
 
     setIsResetting(true);
     try {
-      // TODO: Implement Supabase password reset
-      console.log("Reset password for:", resetEmail);
+      const { error } = await resetPassword(resetEmail);
+      
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      
       toast.success("Password reset email sent! Check your inbox.");
       setForgotPasswordOpen(false);
       setResetEmail("");
-    } catch (error) {
+    } catch {
       toast.error("Failed to send reset email. Please try again.");
     } finally {
       setIsResetting(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
