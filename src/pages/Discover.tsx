@@ -17,98 +17,16 @@ import {
 } from "@/components/ui/sheet";
 import { useNavigate } from "react-router-dom";
 import { generateRoute } from "@/lib/routes";
+import { destinations, type Mood, type BudgetLevel } from "@/data/destinations";
 
-const moods = [
+const moods: { id: Mood; label: string; icon: typeof Sparkles }[] = [
   { id: "relaxing", label: "Relaxing", icon: Sparkles },
   { id: "romantic", label: "Romantic", icon: Heart },
   { id: "adventure", label: "Adventure", icon: Mountain },
   { id: "cultural", label: "Cultural", icon: Palette },
 ];
 
-const allDestinations = [
-  {
-    id: "1",
-    name: "Bali",
-    location: "Indonesia",
-    imageUrl: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400",
-    budgetLevel: "moderate" as const,
-    bestSeason: "Apr-Oct",
-    mood: "relaxing",
-    pricePerDay: 75,
-  },
-  {
-    id: "2",
-    name: "Santorini",
-    location: "Greece",
-    imageUrl: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=400",
-    budgetLevel: "luxury" as const,
-    bestSeason: "May-Sep",
-    mood: "romantic",
-    pricePerDay: 200,
-  },
-  {
-    id: "3",
-    name: "Kyoto",
-    location: "Japan",
-    imageUrl: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400",
-    budgetLevel: "moderate" as const,
-    bestSeason: "Mar-May",
-    mood: "cultural",
-    pricePerDay: 100,
-  },
-  {
-    id: "4",
-    name: "Patagonia",
-    location: "Argentina",
-    imageUrl: "https://images.unsplash.com/photo-1531761535209-180857e963b9?w=400",
-    budgetLevel: "moderate" as const,
-    bestSeason: "Dec-Mar",
-    mood: "adventure",
-    pricePerDay: 120,
-  },
-  {
-    id: "5",
-    name: "Maldives",
-    location: "South Asia",
-    imageUrl: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=400",
-    budgetLevel: "luxury" as const,
-    bestSeason: "Nov-Apr",
-    mood: "romantic",
-    pricePerDay: 350,
-  },
-  {
-    id: "6",
-    name: "Machu Picchu",
-    location: "Peru",
-    imageUrl: "https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=400",
-    budgetLevel: "moderate" as const,
-    bestSeason: "May-Oct",
-    mood: "adventure",
-    pricePerDay: 80,
-  },
-  {
-    id: "7",
-    name: "Marrakech",
-    location: "Morocco",
-    imageUrl: "https://images.unsplash.com/photo-1539020140153-e479b8c22e70?w=400",
-    budgetLevel: "budget" as const,
-    bestSeason: "Mar-May",
-    mood: "cultural",
-    pricePerDay: 50,
-  },
-  {
-    id: "8",
-    name: "Amalfi Coast",
-    location: "Italy",
-    imageUrl: "https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?w=400",
-    budgetLevel: "luxury" as const,
-    bestSeason: "May-Sep",
-    mood: "relaxing",
-    pricePerDay: 250,
-  },
-];
-
-const budgetLabels: Record<string, string> = {
+const budgetLabels: Record<BudgetLevel, string> = {
   budget: "Budget",
   moderate: "Moderate",
   luxury: "Luxury",
@@ -117,27 +35,24 @@ const budgetLabels: Record<string, string> = {
 export default function Discover() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [budgetRange, setBudgetRange] = useState([0, 400]);
-  const [selectedBudgetLevels, setSelectedBudgetLevels] = useState<string[]>([]);
+  const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
+  const [budgetRange, setBudgetRange] = useState([0, 500]);
+  const [selectedBudgetLevels, setSelectedBudgetLevels] = useState<BudgetLevel[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const filteredDestinations = useMemo(() => {
-    return allDestinations.filter((dest) => {
-      // Search filter
+    return destinations.filter((dest) => {
       const matchesSearch = 
         dest.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        dest.location.toLowerCase().includes(searchQuery.toLowerCase());
+        dest.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        dest.country.toLowerCase().includes(searchQuery.toLowerCase());
       
-      // Mood filter
       const matchesMood = !selectedMood || dest.mood === selectedMood;
       
-      // Budget level filter
       const matchesBudgetLevel = 
         selectedBudgetLevels.length === 0 || 
         selectedBudgetLevels.includes(dest.budgetLevel);
       
-      // Price range filter
       const matchesPriceRange = 
         dest.pricePerDay >= budgetRange[0] && 
         dest.pricePerDay <= budgetRange[1];
@@ -146,7 +61,7 @@ export default function Discover() {
     });
   }, [searchQuery, selectedMood, selectedBudgetLevels, budgetRange]);
 
-  const toggleBudgetLevel = (level: string) => {
+  const toggleBudgetLevel = (level: BudgetLevel) => {
     setSelectedBudgetLevels((prev) =>
       prev.includes(level)
         ? prev.filter((l) => l !== level)
@@ -157,14 +72,14 @@ export default function Discover() {
   const clearFilters = () => {
     setSelectedMood(null);
     setSelectedBudgetLevels([]);
-    setBudgetRange([0, 400]);
+    setBudgetRange([0, 500]);
     setSearchQuery("");
   };
 
   const activeFiltersCount = 
     (selectedMood ? 1 : 0) + 
     selectedBudgetLevels.length + 
-    (budgetRange[0] > 0 || budgetRange[1] < 400 ? 1 : 0);
+    (budgetRange[0] > 0 || budgetRange[1] < 500 ? 1 : 0);
 
   return (
     <MobileLayout

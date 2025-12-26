@@ -8,6 +8,7 @@ import { MoodButton } from "@/components/ui/mood-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { generateRoute, ROUTES } from "@/lib/routes";
+import { destinations, getDestinationsByMood, getRandomDestinations, type Mood } from "@/data/destinations";
 
 // Placeholder data
 const mockTrips = [
@@ -31,46 +32,7 @@ const mockTrips = [
   },
 ];
 
-const moodDestinations = [
-  {
-    id: "1",
-    name: "Bali",
-    location: "Indonesia",
-    imageUrl: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400",
-    budgetLevel: "moderate" as const,
-    bestSeason: "Apr-Oct",
-    mood: "relaxing",
-  },
-  {
-    id: "2",
-    name: "Santorini",
-    location: "Greece",
-    imageUrl: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=400",
-    budgetLevel: "luxury" as const,
-    bestSeason: "May-Sep",
-    mood: "romantic",
-  },
-  {
-    id: "3",
-    name: "Swiss Alps",
-    location: "Switzerland",
-    imageUrl: "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=400",
-    budgetLevel: "luxury" as const,
-    bestSeason: "Dec-Mar",
-    mood: "adventure",
-  },
-  {
-    id: "4",
-    name: "Kyoto",
-    location: "Japan",
-    imageUrl: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400",
-    budgetLevel: "moderate" as const,
-    bestSeason: "Mar-May",
-    mood: "cultural",
-  },
-];
-
-const moods = [
+const moods: { id: Mood; label: string; icon: typeof Sun }[] = [
   { id: "relaxing", label: "Relaxing", icon: Sun },
   { id: "adventure", label: "Adventure", icon: TrendingUp },
   { id: "cultural", label: "Cultural", icon: Compass },
@@ -86,18 +48,22 @@ function getGreeting(): string {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [displayedDestinations, setDisplayedDestinations] = useState(getRandomDestinations(4));
 
   useEffect(() => {
-    // Simulate loading
     const timer = setTimeout(() => setIsLoading(false), 500);
     return () => clearTimeout(timer);
   }, []);
 
-  const filteredDestinations = selectedMood
-    ? moodDestinations.filter((d) => d.mood === selectedMood)
-    : moodDestinations;
+  useEffect(() => {
+    if (selectedMood) {
+      setDisplayedDestinations(getDestinationsByMood(selectedMood).slice(0, 4));
+    } else {
+      setDisplayedDestinations(getRandomDestinations(4));
+    }
+  }, [selectedMood]);
 
   return (
     <MobileLayout
@@ -212,7 +178,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4">
-              {filteredDestinations.slice(0, 4).map((destination) => (
+              {displayedDestinations.map((destination) => (
                 <DestinationCard
                   key={destination.id}
                   {...destination}
