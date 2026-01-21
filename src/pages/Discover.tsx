@@ -109,14 +109,14 @@ export default function Discover() {
               <div className="space-y-3">
                 <h3 className="font-semibold">Budget Level</h3>
                 <div className="flex flex-wrap gap-2">
-                  {Object.entries(budgetLabels).map(([key, label]) => (
+                  {(Object.keys(budgetLabels) as BudgetLevel[]).map((level) => (
                     <Badge
-                      key={key}
-                      variant={selectedBudgetLevels.includes(key) ? "default" : "outline"}
+                      key={level}
+                      variant={selectedBudgetLevels.includes(level) ? "default" : "outline"}
                       className="cursor-pointer px-4 py-2"
-                      onClick={() => toggleBudgetLevel(key)}
+                      onClick={() => toggleBudgetLevel(level)}
                     >
-                      {label}
+                      {budgetLabels[level]}
                     </Badge>
                   ))}
                 </div>
