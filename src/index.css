@@ -53,18 +53,33 @@
     --coral-light: 0 100% 92%;
     --golden: 38 92% 50%;
     --golden-light: 38 92% 90%;
+    
+    /* NEW: Teal accent for colorful theme blend */
+    --teal: 171 77% 55%;
+    --teal-light: 171 77% 92%;
+    --teal-dark: 171 77% 35%;
+    
+    /* NEW: Additional fun colors */
+    --lavender: 270 67% 72%;
+    --sky: 199 89% 70%;
+    --forest: 142 53% 45%;
 
     /* Gradients */
     --gradient-ocean: linear-gradient(135deg, hsl(224 76% 38%) 0%, hsl(224 76% 55%) 100%);
     --gradient-coral: linear-gradient(135deg, hsl(0 100% 71%) 0%, hsl(0 100% 80%) 100%);
     --gradient-sunset: linear-gradient(135deg, hsl(0 100% 71%) 0%, hsl(38 92% 50%) 100%);
     --gradient-hero: linear-gradient(180deg, hsl(224 76% 38%) 0%, hsl(224 76% 25%) 100%);
+    /* NEW: Fun gradient combinations */
+    --gradient-teal: linear-gradient(135deg, hsl(171 77% 55%) 0%, hsl(171 77% 70%) 100%);
+    --gradient-tropical: linear-gradient(135deg, hsl(171 77% 55%) 0%, hsl(224 76% 55%) 100%);
+    --gradient-beach: linear-gradient(135deg, hsl(38 92% 50%) 0%, hsl(0 100% 71%) 50%, hsl(171 77% 55%) 100%);
 
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 hsl(218 17% 27% / 0.05);
     --shadow-md: 0 4px 6px -1px hsl(218 17% 27% / 0.1), 0 2px 4px -2px hsl(218 17% 27% / 0.1);
     --shadow-lg: 0 10px 15px -3px hsl(218 17% 27% / 0.1), 0 4px 6px -4px hsl(218 17% 27% / 0.1);
     --shadow-glow: 0 0 20px hsl(224 76% 38% / 0.3);
+    --shadow-teal-glow: 0 0 20px hsl(171 77% 55% / 0.3);
 
     /* Sidebar */
     --sidebar-background: 0 0% 98%;
@@ -113,6 +128,13 @@
     --coral-light: 0 100% 20%;
     --golden: 38 92% 55%;
     --golden-light: 38 92% 20%;
+    
+    --teal: 171 77% 60%;
+    --teal-light: 171 77% 20%;
+    --teal-dark: 171 77% 75%;
+    --lavender: 270 67% 75%;
+    --sky: 199 89% 75%;
+    --forest: 142 53% 50%;
 
     --sidebar-background: 222 47% 8%;
     --sidebar-foreground: 210 40% 98%;

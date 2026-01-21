@@ -75,6 +75,20 @@ export default {
           DEFAULT: "hsl(var(--golden))",
           light: "hsl(var(--golden-light))",
         },
+        teal: {
+          DEFAULT: "hsl(var(--teal))",
+          light: "hsl(var(--teal-light))",
+          dark: "hsl(var(--teal-dark))",
+        },
+        lavender: {
+          DEFAULT: "hsl(var(--lavender))",
+        },
+        sky: {
+          DEFAULT: "hsl(var(--sky))",
+        },
+        forest: {
+          DEFAULT: "hsl(var(--forest))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
