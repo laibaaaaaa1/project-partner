@@ -1,36 +1,14 @@
 import { useState, useEffect } from "react";
-import { Compass, Search, Sun, Cloud, MapPin, Sparkles, MessageCircle, ArrowRight, TrendingUp } from "lucide-react";
+import { Compass, Search, Sun, Sparkles, MessageCircle, ArrowRight, TrendingUp } from "lucide-react";
 import { MobileLayout, FloatingActionButton } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { TripCard } from "@/components/ui/trip-card";
 import { DestinationCard } from "@/components/ui/destination-card";
 import { MoodButton } from "@/components/ui/mood-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { generateRoute, ROUTES } from "@/lib/routes";
-import { destinations, getDestinationsByMood, getRandomDestinations, type Mood } from "@/data/destinations";
-
-// Placeholder data
-const mockTrips = [
-  {
-    id: "1",
-    title: "Tokyo Adventure",
-    destination: "Tokyo, Japan",
-    imageUrl: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400",
-    startDate: "2024-03-15",
-    endDate: "2024-03-25",
-    status: "upcoming" as const,
-  },
-  {
-    id: "2",
-    title: "Bali Retreat",
-    destination: "Bali, Indonesia",
-    imageUrl: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400",
-    startDate: "2024-04-01",
-    endDate: "2024-04-10",
-    status: "draft" as const,
-  },
-];
+import { getDestinationsByMood, getRandomDestinations, type Mood } from "@/data/destinations";
+import { WeatherWidget, TripsList } from "@/components/dashboard";
 
 const moods: { id: Mood; label: string; icon: typeof Sun }[] = [
   { id: "relaxing", label: "Relaxing", icon: Sun },
@@ -51,6 +29,7 @@ export default function Dashboard() {
   const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [displayedDestinations, setDisplayedDestinations] = useState(getRandomDestinations(4));
+  const [currentLocation] = useState("San Francisco");
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 500);
@@ -88,24 +67,8 @@ export default function Dashboard() {
           <p className="text-muted-foreground">Where shall we go today?</p>
         </div>
 
-        {/* Weather Widget */}
-        <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-ocean text-primary-foreground animate-slide-up">
-          <div className="p-3 rounded-full bg-primary-foreground/20">
-            <Sun className="h-6 w-6" />
-          </div>
-          <div className="flex-1">
-            <p className="font-medium">Current Location</p>
-            <div className="flex items-center gap-1 text-sm opacity-80">
-              <MapPin className="h-3 w-3" />
-              <span>San Francisco, CA</span>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-2xl font-bold">24°C</p>
-            <p className="text-xs opacity-80">Partly Cloudy</p>
-          </div>
-          <Cloud className="h-8 w-8 opacity-40" />
-        </div>
+        {/* Dynamic Weather Widget */}
+        <WeatherWidget location={currentLocation} />
 
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-4">
@@ -189,35 +152,8 @@ export default function Dashboard() {
           )}
         </section>
 
-        {/* Upcoming Trips */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold">Your Trips</h2>
-            <Button variant="ghost" size="sm" onClick={() => navigate(ROUTES.TRIPS)}>
-              View all
-              <ArrowRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-          
-          {mockTrips.length > 0 ? (
-            <div className="space-y-3">
-              {mockTrips.slice(0, 2).map((trip) => (
-                <TripCard
-                  key={trip.id}
-                  {...trip}
-                  onClick={() => navigate(generateRoute.trip(trip.id))}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="p-6 rounded-xl border border-dashed border-border text-center">
-              <p className="text-muted-foreground mb-3">No trips planned yet</p>
-              <Button onClick={() => navigate(ROUTES.CREATE_TRIP)}>
-                Plan your first trip
-              </Button>
-            </div>
-          )}
-        </section>
+        {/* Real Trips from Database */}
+        <TripsList maxItems={2} showViewAll />
       </div>
 
       <FloatingActionButton />

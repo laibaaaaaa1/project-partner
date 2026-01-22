@@ -5,8 +5,6 @@ import {
   Calendar, 
   MapPin, 
   DollarSign, 
-  CheckSquare, 
-  FileText, 
   Share2,
   Edit3,
   Clock,
@@ -14,13 +12,13 @@ import {
   Plus,
   Trash2,
   Upload,
-  MoreVertical
+  MoreVertical,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,92 +26,29 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-
-// Mock trip data
-const mockTrip = {
-  id: "1",
-  title: "Tokyo Adventure",
-  destination: "Tokyo, Japan",
-  imageUrl: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800",
-  startDate: "2024-03-15",
-  endDate: "2024-03-25",
-  status: "upcoming" as const,
-  travelers: 2,
-  budget: { total: 3000, spent: 1200, currency: "USD" },
-  itinerary: [
-    { 
-      day: 1, 
-      date: "Mar 15",
-      title: "Arrival & Shibuya", 
-      activities: [
-        { time: "14:00", name: "Airport arrival & transfer", duration: "2h" },
-        { time: "16:00", name: "Hotel check-in", duration: "1h" },
-        { time: "18:00", name: "Shibuya Crossing & Hachiko", duration: "2h" },
-        { time: "20:00", name: "Dinner at Ichiran Ramen", duration: "1.5h" },
-      ]
-    },
-    { 
-      day: 2, 
-      date: "Mar 16",
-      title: "Traditional Tokyo", 
-      activities: [
-        { time: "09:00", name: "Senso-ji Temple", duration: "2h" },
-        { time: "11:30", name: "Nakamise Shopping Street", duration: "1h" },
-        { time: "14:00", name: "Meiji Shrine", duration: "2h" },
-        { time: "16:30", name: "Harajuku & Takeshita Street", duration: "2h" },
-      ]
-    },
-    { 
-      day: 3, 
-      date: "Mar 17",
-      title: "Modern Tokyo", 
-      activities: [
-        { time: "10:00", name: "TeamLab Borderless", duration: "3h" },
-        { time: "14:00", name: "Odaiba Seaside", duration: "2h" },
-        { time: "17:00", name: "Tokyo Tower sunset", duration: "2h" },
-        { time: "19:30", name: "Roppongi nightlife", duration: "3h" },
-      ]
-    },
-  ],
-  packingList: [
-    { id: "1", item: "Passport", checked: true, category: "Documents" },
-    { id: "2", item: "Travel adapter (Type A/B)", checked: true, category: "Electronics" },
-    { id: "3", item: "Comfortable walking shoes", checked: true, category: "Clothing" },
-    { id: "4", item: "Light jacket", checked: false, category: "Clothing" },
-    { id: "5", item: "Portable WiFi/SIM card", checked: false, category: "Electronics" },
-    { id: "6", item: "JR Pass", checked: false, category: "Documents" },
-    { id: "7", item: "Cash (Yen)", checked: false, category: "Money" },
-    { id: "8", item: "Camera", checked: true, category: "Electronics" },
-  ],
-  documents: [
-    { id: "1", name: "Flight Confirmation", type: "PDF", uploadedAt: "2024-02-20" },
-    { id: "2", name: "Hotel Booking", type: "PDF", uploadedAt: "2024-02-18" },
-  ],
-};
+import { useTrip, useDeleteTrip } from "@/hooks/useTrips";
+import { BudgetTracker } from "@/components/trips/BudgetTracker";
+import { PackingListView } from "@/components/trips/PackingListView";
+import { ActivityCard } from "@/components/trips/ActivityCard";
+import { WeatherWidget } from "@/components/dashboard/WeatherWidget";
+import { ROUTES } from "@/lib/routes";
+import type { Activity, Destination } from "@/types/trip";
+import { format, differenceInDays, parseISO } from "date-fns";
 
 export default function TripDetails() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [packingList, setPackingList] = useState(mockTrip.packingList);
   const [activeTab, setActiveTab] = useState("itinerary");
-
-  const togglePackingItem = (itemId: string) => {
-    setPackingList((prev) =>
-      prev.map((item) =>
-        item.id === itemId ? { ...item, checked: !item.checked } : item
-      )
-    );
-  };
-
-  const checkedCount = packingList.filter((item) => item.checked).length;
-  const packingProgress = (checkedCount / packingList.length) * 100;
-  const budgetProgress = (mockTrip.budget.spent / mockTrip.budget.total) * 100;
+  
+  const { data: trip, isLoading, error } = useTrip(id);
+  const deleteTripMutation = useDeleteTrip();
 
   const handleShare = async () => {
+    if (!trip) return;
     if (navigator.share) {
       await navigator.share({
-        title: mockTrip.title,
-        text: `Check out my trip to ${mockTrip.destination}!`,
+        title: trip.title,
+        text: `Check out my trip to ${trip.destinations?.[0]?.name || "somewhere amazing"}!`,
         url: window.location.href,
       });
     } else {
@@ -122,27 +57,116 @@ export default function TripDetails() {
     }
   };
 
-  const formatDateRange = () => {
-    const start = new Date(mockTrip.startDate);
-    const end = new Date(mockTrip.endDate);
-    const options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
-    return `${start.toLocaleDateString("en-US", options)} - ${end.toLocaleDateString("en-US", options)}`;
+  const handleDelete = async () => {
+    if (!id) return;
+    if (confirm("Are you sure you want to delete this trip?")) {
+      await deleteTripMutation.mutateAsync(id);
+      navigate(ROUTES.TRIPS);
+    }
   };
 
-  const getDaysUntil = () => {
-    const start = new Date(mockTrip.startDate);
-    const today = new Date();
-    const diff = Math.ceil((start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    return diff > 0 ? diff : 0;
+  const formatDateRange = (startDate?: string, endDate?: string) => {
+    if (!startDate || !endDate) return "Dates not set";
+    try {
+      const start = parseISO(startDate);
+      const end = parseISO(endDate);
+      return `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}`;
+    } catch {
+      return "Invalid dates";
+    }
   };
+
+  const getDaysUntil = (startDate?: string) => {
+    if (!startDate) return 0;
+    try {
+      const start = parseISO(startDate);
+      const today = new Date();
+      const diff = differenceInDays(start, today);
+      return diff > 0 ? diff : 0;
+    } catch {
+      return 0;
+    }
+  };
+
+  const getDestinationImage = (destination?: Destination): string => {
+    const defaultImages: Record<string, string> = {
+      tokyo: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800",
+      paris: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800",
+      bali: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800",
+      london: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800",
+      default: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800",
+    };
+    
+    if (!destination?.name) return defaultImages.default;
+    const name = destination.name.toLowerCase();
+    for (const [key, url] of Object.entries(defaultImages)) {
+      if (name.includes(key)) return url;
+    }
+    return defaultImages.default;
+  };
+
+  // Group activities by destination and order
+  const groupActivitiesByDestination = (destinations?: Destination[]) => {
+    if (!destinations) return [];
+    
+    return destinations.map((dest, index) => {
+      const activities = dest.activities || [];
+      const sortedActivities = [...activities].sort((a, b) => {
+        if (a.order_index !== b.order_index) {
+          return a.order_index - b.order_index;
+        }
+        if (!a.start_time || !b.start_time) return 0;
+        return a.start_time.localeCompare(b.start_time);
+      });
+
+      return {
+        day: index + 1,
+        date: `Day ${index + 1}`,
+        title: dest.name || "Activities",
+        activities: sortedActivities,
+      };
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background pb-safe">
+        <Skeleton className="h-56 w-full" />
+        <div className="px-4 py-4 space-y-4">
+          <Skeleton className="h-6 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+          <div className="flex gap-4">
+            <Skeleton className="h-8 w-24" />
+            <Skeleton className="h-8 w-24" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !trip) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center p-6">
+          <p className="text-muted-foreground mb-4">Trip not found</p>
+          <Button onClick={() => navigate(ROUTES.TRIPS)}>Go to Trips</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const daysUntil = getDaysUntil(trip.start_date);
+  const destinationName = trip.destinations?.[0]?.name || "Unknown destination";
+  const heroImage = getDestinationImage(trip.destinations?.[0]);
+  const itineraryDays = groupActivitiesByDestination(trip.destinations);
 
   return (
     <div className="min-h-screen bg-background pb-safe">
       {/* Hero */}
       <div className="relative h-56">
         <img
-          src={mockTrip.imageUrl}
-          alt={mockTrip.title}
+          src={heroImage}
+          alt={trip.title}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
@@ -173,12 +197,20 @@ export default function TripDetails() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(`${ROUTES.CREATE_TRIP}?edit=${id}`)}>
                   <Edit3 className="h-4 w-4 mr-2" />
                   Edit Trip
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive">
-                  <Trash2 className="h-4 w-4 mr-2" />
+                <DropdownMenuItem 
+                  className="text-destructive"
+                  onClick={handleDelete}
+                  disabled={deleteTripMutation.isPending}
+                >
+                  {deleteTripMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4 mr-2" />
+                  )}
                   Delete Trip
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -189,15 +221,17 @@ export default function TripDetails() {
         {/* Title overlay */}
         <div className="absolute bottom-4 left-4 right-4">
           <div className="flex items-center gap-2 mb-2">
-            <Badge className="bg-primary/90">{getDaysUntil()} days to go</Badge>
-            <Badge variant="outline" className="bg-background/50 backdrop-blur-sm">
-              {mockTrip.status}
+            {daysUntil > 0 && (
+              <Badge className="bg-primary/90">{daysUntil} days to go</Badge>
+            )}
+            <Badge variant="outline" className="bg-background/50 backdrop-blur-sm capitalize">
+              {trip.status}
             </Badge>
           </div>
-          <h1 className="font-display text-2xl font-bold">{mockTrip.title}</h1>
+          <h1 className="font-display text-2xl font-bold">{trip.title}</h1>
           <div className="flex items-center gap-2 text-muted-foreground mt-1">
             <MapPin className="h-4 w-4" />
-            <span>{mockTrip.destination}</span>
+            <span>{destinationName}</span>
           </div>
         </div>
       </div>
@@ -206,147 +240,105 @@ export default function TripDetails() {
       <div className="px-4 py-4 flex items-center gap-6 border-b border-border overflow-x-auto">
         <div className="flex items-center gap-2 shrink-0">
           <Calendar className="h-4 w-4 text-primary" />
-          <span className="text-sm">{formatDateRange()}</span>
+          <span className="text-sm">{formatDateRange(trip.start_date, trip.end_date)}</span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Users className="h-4 w-4 text-primary" />
-          <span className="text-sm">{mockTrip.travelers} travelers</span>
+          <span className="text-sm">{trip.collaborators?.length || 1} traveler(s)</span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <DollarSign className="h-4 w-4 text-primary" />
-          <span className="text-sm">
-            ${mockTrip.budget.spent.toLocaleString()} / ${mockTrip.budget.total.toLocaleString()}
-          </span>
+          <span className="text-sm">{trip.currency || "USD"}</span>
         </div>
       </div>
 
-      {/* Budget Progress */}
-      <div className="px-4 py-3 border-b border-border">
-        <div className="flex items-center justify-between text-sm mb-2">
-          <span className="text-muted-foreground">Budget used</span>
-          <span className="font-medium">{Math.round(budgetProgress)}%</span>
+      {/* Weather for destination */}
+      {destinationName && (
+        <div className="px-4 py-3 border-b border-border">
+          <WeatherWidget location={destinationName.split(",")[0]} />
         </div>
-        <Progress value={budgetProgress} className="h-2" />
-      </div>
+      )}
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="px-4 py-4">
-        <TabsList className="w-full grid grid-cols-3">
+        <TabsList className="w-full grid grid-cols-4">
           <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
-          <TabsTrigger value="packing">
-            Packing
-            <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-xs">
-              {checkedCount}/{packingList.length}
-            </Badge>
-          </TabsTrigger>
-          <TabsTrigger value="documents">Docs</TabsTrigger>
+          <TabsTrigger value="budget">Budget</TabsTrigger>
+          <TabsTrigger value="packing">Packing</TabsTrigger>
+          <TabsTrigger value="docs">Docs</TabsTrigger>
         </TabsList>
 
         {/* Itinerary Tab */}
         <TabsContent value="itinerary" className="mt-6 space-y-4">
-          {mockTrip.itinerary.map((day) => (
-            <div key={day.day} className="rounded-xl border border-border overflow-hidden">
-              <div className="flex items-center gap-3 p-4 bg-muted/30 border-b border-border">
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                  <span className="font-bold text-primary-foreground">{day.day}</span>
-                </div>
-                <div>
-                  <h3 className="font-display font-semibold">{day.title}</h3>
-                  <p className="text-xs text-muted-foreground">{day.date}</p>
-                </div>
-              </div>
-              <div className="p-4 space-y-3">
-                {day.activities.map((activity, i) => (
-                  <div key={i} className="flex gap-3">
-                    <div className="flex flex-col items-center">
-                      <span className="text-xs font-medium text-primary">{activity.time}</span>
-                      <div className="w-px flex-1 bg-border mt-1" />
-                    </div>
-                    <div className="flex-1 pb-3">
-                      <p className="font-medium text-sm">{activity.name}</p>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                        <Clock className="h-3 w-3" />
-                        {activity.duration}
-                      </div>
-                    </div>
+          {itineraryDays.length > 0 ? (
+            itineraryDays.map((day) => (
+              <div key={`${day.day}-${day.date}`} className="rounded-xl border border-border overflow-hidden">
+                <div className="flex items-center gap-3 p-4 bg-muted/30 border-b border-border">
+                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+                    <span className="font-bold text-primary-foreground">{day.day}</span>
                   </div>
-                ))}
+                  <div>
+                    <h3 className="font-display font-semibold">{day.title}</h3>
+                    <p className="text-xs text-muted-foreground">{day.date}</p>
+                  </div>
+                </div>
+                <div className="p-4 space-y-3">
+                  {day.activities.length > 0 ? (
+                    day.activities.map((activity) => (
+                      <ActivityCard
+                        key={activity.id}
+                        activity={activity}
+                        showDragHandle={false}
+                      />
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No activities for this day yet
+                    </p>
+                  )}
+                </div>
               </div>
+            ))
+          ) : (
+            <div className="p-8 text-center border border-dashed border-border rounded-xl">
+              <Clock className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+              <p className="text-muted-foreground mb-4">No activities planned yet</p>
+              <Button variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Activity
+              </Button>
             </div>
-          ))}
+          )}
           <Button variant="outline" className="w-full">
             <Plus className="h-4 w-4 mr-2" />
             Add Day
           </Button>
         </TabsContent>
 
+        {/* Budget Tab */}
+        <TabsContent value="budget" className="mt-6">
+          <BudgetTracker 
+            tripId={id || ""} 
+            totalBudget={trip.budget || 0} 
+            currency={trip.currency || "USD"} 
+          />
+        </TabsContent>
+
         {/* Packing Tab */}
-        <TabsContent value="packing" className="mt-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">{checkedCount} of {packingList.length} packed</p>
-              <p className="text-xs text-muted-foreground">Keep going!</p>
-            </div>
-            <Progress value={packingProgress} className="w-24 h-2" />
-          </div>
-
-          <div className="space-y-2">
-            {packingList.map((item) => (
-              <div
-                key={item.id}
-                className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${
-                  item.checked 
-                    ? "bg-primary/5 border-primary/20" 
-                    : "border-border hover:border-primary/30"
-                }`}
-              >
-                <Checkbox
-                  checked={item.checked}
-                  onCheckedChange={() => togglePackingItem(item.id)}
-                />
-                <div className="flex-1">
-                  <span className={item.checked ? "line-through text-muted-foreground" : ""}>
-                    {item.item}
-                  </span>
-                  <p className="text-xs text-muted-foreground">{item.category}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <Button variant="outline" className="w-full">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Item
-          </Button>
+        <TabsContent value="packing" className="mt-6">
+          <PackingListView tripId={id || ""} />
         </TabsContent>
 
         {/* Documents Tab */}
-        <TabsContent value="documents" className="mt-6 space-y-4">
-          {mockTrip.documents.length > 0 ? (
-            <>
-              {mockTrip.documents.map((doc) => (
-                <div
-                  key={doc.id}
-                  className="flex items-center gap-3 p-4 rounded-xl border border-border"
-                >
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <FileText className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium">{doc.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {doc.type} • Uploaded {doc.uploadedAt}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </>
-          ) : null}
-
-          <Button variant="outline" className="w-full">
-            <Upload className="h-4 w-4 mr-2" />
-            Upload Document
-          </Button>
+        <TabsContent value="docs" className="mt-6 space-y-4">
+          <div className="p-8 text-center border border-dashed border-border rounded-xl">
+            <Upload className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+            <p className="text-muted-foreground mb-4">No documents uploaded yet</p>
+            <Button variant="outline">
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Document
+            </Button>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
