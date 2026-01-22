@@ -5,6 +5,8 @@ import { TripCollaborator, TripComment, CollaboratorRole } from '@/types/trip';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 
+// Note: Using type assertions (as any) until database migration runs and types are regenerated
+
 // Collaborators
 export function useCollaborators(tripId: string | undefined) {
   return useQuery({
@@ -12,7 +14,7 @@ export function useCollaborators(tripId: string | undefined) {
     queryFn: async (): Promise<TripCollaborator[]> => {
       if (!tripId) return [];
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('trip_collaborators')
         .select(`
           *,
@@ -22,7 +24,7 @@ export function useCollaborators(tripId: string | undefined) {
         .order('invited_at', { ascending: false });
 
       if (error) throw error;
-      return (data as unknown as TripCollaborator[]) || [];
+      return (data as TripCollaborator[]) || [];
     },
     enabled: !!tripId,
   });
@@ -40,7 +42,7 @@ export function useInviteCollaborator() {
     }): Promise<TripCollaborator> => {
       if (!user) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('trip_collaborators')
         .insert({
           trip_id: tripId,
@@ -58,7 +60,7 @@ export function useInviteCollaborator() {
         }
         throw error;
       }
-      return data as unknown as TripCollaborator;
+      return data as TripCollaborator;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['collaborators', data.trip_id] });
@@ -75,7 +77,7 @@ export function useUpdateCollaboratorRole() {
 
   return useMutation({
     mutationFn: async ({ id, tripId, role }: { id: string; tripId: string; role: CollaboratorRole }): Promise<void> => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('trip_collaborators')
         .update({ role })
         .eq('id', id);
@@ -97,7 +99,7 @@ export function useRemoveCollaborator() {
 
   return useMutation({
     mutationFn: async ({ id, tripId }: { id: string; tripId: string }): Promise<void> => {
-      const { error } = await supabase.from('trip_collaborators').delete().eq('id', id);
+      const { error } = await (supabase as any).from('trip_collaborators').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
@@ -117,7 +119,7 @@ export function useRespondToInvitation() {
 
   return useMutation({
     mutationFn: async ({ id, accept }: { id: string; accept: boolean }): Promise<void> => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('trip_collaborators')
         .update({
           invitation_status: accept ? 'accepted' : 'declined',
@@ -146,7 +148,7 @@ export function useComments(tripId: string | undefined) {
     queryFn: async (): Promise<TripComment[]> => {
       if (!tripId) return [];
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('trip_comments')
         .select(`
           *,
@@ -157,7 +159,7 @@ export function useComments(tripId: string | undefined) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return (data as unknown as TripComment[]) || [];
+      return (data as TripComment[]) || [];
     },
     enabled: !!tripId,
   });
@@ -183,7 +185,7 @@ export function useAddComment() {
     }): Promise<TripComment> => {
       if (!user) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('trip_comments')
         .insert({
           trip_id: tripId,
@@ -200,7 +202,7 @@ export function useAddComment() {
         .single();
 
       if (error) throw error;
-      return data as unknown as TripComment;
+      return data as TripComment;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['comments', data.trip_id] });
@@ -216,7 +218,7 @@ export function useDeleteComment() {
 
   return useMutation({
     mutationFn: async ({ id, tripId }: { id: string; tripId: string }): Promise<void> => {
-      const { error } = await supabase.from('trip_comments').delete().eq('id', id);
+      const { error } = await (supabase as any).from('trip_comments').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
