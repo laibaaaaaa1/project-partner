@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { PackingList, PackingItem } from '@/types/trip';
 import { toast } from 'sonner';
 
+// Note: Using type assertions (as any) until database migration runs and types are regenerated
+
 // Smart packing suggestions based on destination and weather
 export const defaultPackingCategories = {
   essentials: [
@@ -65,7 +67,7 @@ export function usePackingList(tripId: string | undefined) {
     queryFn: async (): Promise<PackingList | null> => {
       if (!tripId) return null;
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('packing_lists')
         .select(`
           *,
@@ -75,7 +77,7 @@ export function usePackingList(tripId: string | undefined) {
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      return data as unknown as PackingList | null;
+      return data as PackingList | null;
     },
     enabled: !!tripId,
   });
@@ -86,14 +88,14 @@ export function useCreatePackingList() {
 
   return useMutation({
     mutationFn: async ({ tripId, name = 'Main List' }: { tripId: string; name?: string }): Promise<PackingList> => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('packing_lists')
         .insert({ trip_id: tripId, name })
         .select()
         .single();
 
       if (error) throw error;
-      return data as unknown as PackingList;
+      return data as PackingList;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['packing-list', data.trip_id] });
@@ -109,14 +111,14 @@ export function useAddPackingItem() {
 
   return useMutation({
     mutationFn: async (item: Omit<PackingItem, 'id' | 'created_at'>): Promise<PackingItem> => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('packing_items')
         .insert(item)
         .select()
         .single();
 
       if (error) throw error;
-      return data as unknown as PackingItem;
+      return data as PackingItem;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packing-list'] });
@@ -132,7 +134,7 @@ export function useTogglePackingItem() {
 
   return useMutation({
     mutationFn: async ({ id, is_packed }: { id: string; is_packed: boolean }): Promise<void> => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('packing_items')
         .update({ is_packed })
         .eq('id', id);
@@ -150,7 +152,7 @@ export function useDeletePackingItem() {
 
   return useMutation({
     mutationFn: async (itemId: string): Promise<void> => {
-      const { error } = await supabase.from('packing_items').delete().eq('id', itemId);
+      const { error } = await (supabase as any).from('packing_items').delete().eq('id', itemId);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -181,7 +183,7 @@ export function useBulkAddPackingItems() {
         is_packed: false,
       }));
 
-      const { error } = await supabase.from('packing_items').insert(itemsToInsert);
+      const { error } = await (supabase as any).from('packing_items').insert(itemsToInsert);
       if (error) throw error;
     },
     onSuccess: () => {

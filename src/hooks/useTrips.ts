@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Trip, Destination, Activity, Expense } from '@/types/trip';
+import { Trip, Destination, Activity, Expense, CreateTrip } from '@/types/trip';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 
-// Note: Using type assertions until database migration runs and types are regenerated
+// Note: Using type assertions (as any) until database migration runs and types are regenerated
 
 // Fetch all trips for current user
 export function useTrips() {
@@ -29,7 +29,6 @@ export function useTrips() {
       if (error) throw error;
       return (data as Trip[]) || [];
     },
-    },
     enabled: !!user,
   });
 }
@@ -43,7 +42,7 @@ export function useTrip(tripId: string | undefined) {
     queryFn: async (): Promise<Trip | null> => {
       if (!tripId || !user) return null;
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('trips')
         .select(`
           *,
@@ -60,7 +59,7 @@ export function useTrip(tripId: string | undefined) {
         .single();
 
       if (error) throw error;
-      return data as unknown as Trip;
+      return data as Trip;
     },
     enabled: !!tripId && !!user,
   });
@@ -75,7 +74,7 @@ export function useCreateTrip() {
     mutationFn: async (tripData: Partial<CreateTrip>): Promise<Trip> => {
       if (!user) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('trips')
         .insert({
           ...tripData,
@@ -88,7 +87,7 @@ export function useCreateTrip() {
         .single();
 
       if (error) throw error;
-      return data as unknown as Trip;
+      return data as Trip;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trips'] });
@@ -106,7 +105,7 @@ export function useUpdateTrip() {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Trip> & { id: string }): Promise<Trip> => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('trips')
         .update(updates)
         .eq('id', id)
@@ -114,7 +113,7 @@ export function useUpdateTrip() {
         .single();
 
       if (error) throw error;
-      return data as unknown as Trip;
+      return data as Trip;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['trips'] });
@@ -133,7 +132,7 @@ export function useDeleteTrip() {
 
   return useMutation({
     mutationFn: async (tripId: string): Promise<void> => {
-      const { error } = await supabase.from('trips').delete().eq('id', tripId);
+      const { error } = await (supabase as any).from('trips').delete().eq('id', tripId);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -152,14 +151,14 @@ export function useCreateDestination() {
 
   return useMutation({
     mutationFn: async (destination: Omit<Destination, 'id' | 'created_at' | 'updated_at' | 'activities'>): Promise<Destination> => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('destinations')
         .insert(destination)
         .select()
         .single();
 
       if (error) throw error;
-      return data as unknown as Destination;
+      return data as Destination;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['trip', data.trip_id] });
@@ -176,7 +175,7 @@ export function useUpdateDestination() {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Destination> & { id: string }): Promise<Destination> => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('destinations')
         .update(updates)
         .eq('id', id)
@@ -184,7 +183,7 @@ export function useUpdateDestination() {
         .single();
 
       if (error) throw error;
-      return data as unknown as Destination;
+      return data as Destination;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['trip', data.trip_id] });
@@ -200,7 +199,7 @@ export function useDeleteDestination() {
 
   return useMutation({
     mutationFn: async ({ id, tripId }: { id: string; tripId: string }): Promise<void> => {
-      const { error } = await supabase.from('destinations').delete().eq('id', id);
+      const { error } = await (supabase as any).from('destinations').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
@@ -219,14 +218,14 @@ export function useCreateActivity() {
 
   return useMutation({
     mutationFn: async (activity: Omit<Activity, 'id' | 'created_at' | 'updated_at'>): Promise<Activity> => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('activities')
         .insert(activity)
         .select()
         .single();
 
       if (error) throw error;
-      return data as unknown as Activity;
+      return data as Activity;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trip'] });
@@ -243,7 +242,7 @@ export function useUpdateActivity() {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Activity> & { id: string }): Promise<Activity> => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('activities')
         .update(updates)
         .eq('id', id)
@@ -251,7 +250,7 @@ export function useUpdateActivity() {
         .single();
 
       if (error) throw error;
-      return data as unknown as Activity;
+      return data as Activity;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trip'] });
@@ -267,7 +266,7 @@ export function useDeleteActivity() {
 
   return useMutation({
     mutationFn: async (activityId: string): Promise<void> => {
-      const { error } = await supabase.from('activities').delete().eq('id', activityId);
+      const { error } = await (supabase as any).from('activities').delete().eq('id', activityId);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -287,14 +286,14 @@ export function useExpenses(tripId: string | undefined) {
     queryFn: async (): Promise<Expense[]> => {
       if (!tripId) return [];
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('expenses')
         .select('*')
         .eq('trip_id', tripId)
         .order('date', { ascending: false });
 
       if (error) throw error;
-      return (data as unknown as Expense[]) || [];
+      return (data as Expense[]) || [];
     },
     enabled: !!tripId,
   });
@@ -305,14 +304,14 @@ export function useCreateExpense() {
 
   return useMutation({
     mutationFn: async (expense: Omit<Expense, 'id' | 'created_at' | 'updated_at'>): Promise<Expense> => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('expenses')
         .insert(expense)
         .select()
         .single();
 
       if (error) throw error;
-      return data as unknown as Expense;
+      return data as Expense;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['expenses', data.trip_id] });
@@ -329,7 +328,7 @@ export function useDeleteExpense() {
 
   return useMutation({
     mutationFn: async ({ id, tripId }: { id: string; tripId: string }): Promise<void> => {
-      const { error } = await supabase.from('expenses').delete().eq('id', id);
+      const { error } = await (supabase as any).from('expenses').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
