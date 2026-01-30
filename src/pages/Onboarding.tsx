@@ -23,6 +23,7 @@ import {
   Loader2
 } from "lucide-react";
 import { toast } from "sonner";
+import { useUpsertPreferences } from "@/hooks/useUserPreferences";
 
 const travelStyles = [
   { id: "adventure", label: "Adventure", icon: Mountain, description: "Hiking, extreme sports, exploration" },
@@ -57,7 +58,7 @@ const travelFrequencies = [
 export default function Onboarding() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const upsertPreferences = useUpsertPreferences();
   
   // Form state
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
@@ -93,25 +94,22 @@ export default function Onboarding() {
   };
 
   const handleComplete = async () => {
-    setIsSubmitting(true);
     try {
-      // TODO: Save preferences to Supabase
-      const preferences = {
-        travelStyles: selectedStyles,
-        budgetRange: budgetRange[0],
-        accommodations: selectedAccommodations,
-        activities: selectedActivities,
-        travelFrequency,
-      };
-      console.log("Saving preferences:", preferences);
+      await upsertPreferences.mutateAsync({
+        travel_styles: selectedStyles,
+        budget_range: budgetRange[0].toString(),
+        accommodation_preferences: selectedAccommodations,
+        activity_preferences: selectedActivities,
+        travel_frequency: travelFrequency,
+      });
       toast.success("Preferences saved! Let's explore.");
       navigate(ROUTES.DASHBOARD);
     } catch (error) {
       toast.error("Failed to save preferences. Please try again.");
-    } finally {
-      setIsSubmitting(false);
     }
   };
+
+  const isSubmitting = upsertPreferences.isPending;
 
   const canProceed = () => {
     switch (step) {
