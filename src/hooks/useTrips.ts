@@ -323,6 +323,31 @@ export function useCreateExpense() {
   });
 }
 
+export function useUpdateExpense() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, tripId, ...updates }: Partial<Expense> & { id: string; tripId: string }): Promise<Expense> => {
+      const { data, error } = await (supabase as any)
+        .from('expenses')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as Expense;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['expenses', variables.tripId] });
+      toast.success('Expense updated!');
+    },
+    onError: (error) => {
+      toast.error('Failed to update expense: ' + error.message);
+    },
+  });
+}
+
 export function useDeleteExpense() {
   const queryClient = useQueryClient();
 
