@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { Plus, Trash2, DollarSign, TrendingUp, Edit2, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, DollarSign, TrendingUp, Edit2, RefreshCw, Receipt, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,7 +21,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense } from '@/hooks/useTrips';
+import { useExchangeRates, convertCurrency } from '@/hooks/useExchangeRates';
 import { ExpenseCategory, expenseCategoryConfig, Expense } from '@/types/trip';
+import { currencies, formatCurrency } from '@/lib/currency';
+import { ReceiptUpload } from './ReceiptUpload';
 import { cn } from '@/lib/utils';
 
 interface BudgetTrackerProps {
@@ -30,60 +33,9 @@ interface BudgetTrackerProps {
   currency?: string;
 }
 
-// Exchange rates relative to USD (approximate rates)
-const exchangeRates: Record<string, number> = {
-  USD: 1,
-  EUR: 0.92,
-  GBP: 0.79,
-  JPY: 149.50,
-  AUD: 1.53,
-  CAD: 1.36,
-  CHF: 0.88,
-  CNY: 7.24,
-  INR: 83.12,
-  MXN: 17.15,
-  BRL: 4.97,
-  KRW: 1320.50,
-  SGD: 1.34,
-  THB: 35.50,
-  NZD: 1.64,
-  PKR: 278.50,
-};
-
-const currencies = [
-  { code: 'USD', symbol: '$', name: 'US Dollar' },
-  { code: 'EUR', symbol: '€', name: 'Euro' },
-  { code: 'GBP', symbol: '£', name: 'British Pound' },
-  { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
-  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
-  { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
-  { code: 'CHF', symbol: 'Fr', name: 'Swiss Franc' },
-  { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
-  { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
-  { code: 'MXN', symbol: '$', name: 'Mexican Peso' },
-  { code: 'BRL', symbol: 'R$', name: 'Brazilian Real' },
-  { code: 'KRW', symbol: '₩', name: 'South Korean Won' },
-  { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
-  { code: 'THB', symbol: '฿', name: 'Thai Baht' },
-  { code: 'NZD', symbol: 'NZ$', name: 'New Zealand Dollar' },
-  { code: 'PKR', symbol: '₨', name: 'Pakistani Rupee' },
-];
-
-const getCurrencySymbol = (code: string) => {
-  return currencies.find(c => c.code === code)?.symbol || code;
-};
-
-// Convert amount from one currency to another
-const convertCurrency = (amount: number, fromCurrency: string, toCurrency: string): number => {
-  const fromRate = exchangeRates[fromCurrency] || 1;
-  const toRate = exchangeRates[toCurrency] || 1;
-  // Convert to USD first, then to target currency
-  const usdAmount = amount / fromRate;
-  return usdAmount * toRate;
-};
-
 export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: BudgetTrackerProps) {
   const { data: expenses = [], isLoading } = useExpenses(tripId);
+  const { data: ratesData, isLoading: isLoadingRates, refetch: refetchRates } = useExchangeRates(currency);
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();
   const deleteExpense = useDeleteExpense();
@@ -96,19 +48,22 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
     description: '',
     date: new Date().toISOString().split('T')[0],
     currency: currency,
+    receipt_url: '',
   });
 
-  // Calculate totals with currency conversion
+  const rates = ratesData?.rates || {};
+  const ratesSource = ratesData?.source || 'fallback';
+
+  // Calculate totals with live currency conversion
   const { totalSpentInBaseCurrency, expensesByCategory } = useMemo(() => {
     let total = 0;
     const byCategory: Record<string, number> = {};
 
     expenses.forEach((exp) => {
-      const convertedAmount = convertCurrency(
-        Number(exp.amount),
-        exp.currency || 'USD',
-        currency
-      );
+      const convertedAmount = Object.keys(rates).length > 0
+        ? convertCurrency(Number(exp.amount), exp.currency || 'USD', currency, rates)
+        : Number(exp.amount);
+      
       total += convertedAmount;
       
       const cat = exp.category;
@@ -116,7 +71,7 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
     });
 
     return { totalSpentInBaseCurrency: total, expensesByCategory: byCategory };
-  }, [expenses, currency]);
+  }, [expenses, currency, rates]);
 
   const remaining = totalBudget - totalSpentInBaseCurrency;
   const percentUsed = totalBudget > 0 ? (totalSpentInBaseCurrency / totalBudget) * 100 : 0;
@@ -137,6 +92,7 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
       currency: newExpense.currency,
       description: newExpense.description,
       date: newExpense.date,
+      receipt_url: newExpense.receipt_url || undefined,
     });
 
     resetForm();
@@ -154,6 +110,7 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
       currency: newExpense.currency,
       description: newExpense.description,
       date: newExpense.date,
+      receipt_url: newExpense.receipt_url || undefined,
     });
 
     resetForm();
@@ -168,6 +125,7 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
       description: expense.description || '',
       date: expense.date,
       currency: expense.currency || currency,
+      receipt_url: expense.receipt_url || '',
     });
   };
 
@@ -178,16 +136,8 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
       description: '',
       date: new Date().toISOString().split('T')[0],
       currency: currency,
+      receipt_url: '',
     });
-  };
-
-  const formatCurrency = (amount: number, currencyCode: string = currency) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currencyCode,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
   };
 
   const ExpenseForm = ({ isEdit = false }: { isEdit?: boolean }) => (
@@ -255,6 +205,16 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
           onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
         />
       </div>
+      <div className="space-y-2">
+        <Label>Receipt (optional)</Label>
+        <ReceiptUpload
+          tripId={tripId}
+          expenseId={isEdit ? editingExpense?.id : undefined}
+          currentReceiptUrl={newExpense.receipt_url}
+          onUploadComplete={(url) => setNewExpense({ ...newExpense, receipt_url: url })}
+          onRemove={() => setNewExpense({ ...newExpense, receipt_url: '' })}
+        />
+      </div>
       <Button
         className="w-full bg-teal hover:bg-teal-dark"
         onClick={isEdit ? handleUpdateExpense : handleAddExpense}
@@ -276,7 +236,7 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm opacity-90">Total Budget</p>
-              <p className="text-2xl font-bold">{formatCurrency(totalBudget)}</p>
+              <p className="text-2xl font-bold">{formatCurrency(totalBudget, currency)}</p>
             </div>
             <DollarSign className="h-10 w-10 opacity-50" />
           </div>
@@ -284,7 +244,7 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
         <CardContent className="p-4 space-y-4">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Spent (converted to {currency})</span>
-            <span className="font-medium">{formatCurrency(totalSpentInBaseCurrency)}</span>
+            <span className="font-medium">{formatCurrency(totalSpentInBaseCurrency, currency)}</span>
           </div>
           <Progress 
             value={Math.min(percentUsed, 100)} 
@@ -301,13 +261,33 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
               "font-medium",
               remaining < 0 ? "text-destructive" : "text-teal-dark"
             )}>
-              {formatCurrency(remaining)}
+              {formatCurrency(remaining, currency)}
             </span>
           </div>
           {expenses.some(exp => exp.currency !== currency) && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2">
-              <RefreshCw className="h-3 w-3" />
-              <span>Amounts converted to {currency} using approximate exchange rates</span>
+            <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2">
+              <div className="flex items-center gap-2">
+                {isLoadingRates ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3 w-3" />
+                )}
+                <span>
+                  {ratesSource === 'live' 
+                    ? `Live rates from ${ratesData?.timestamp ? new Date(ratesData.timestamp).toLocaleTimeString() : 'API'}`
+                    : 'Using approximate exchange rates'
+                  }
+                </span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 px-2 text-xs"
+                onClick={() => refetchRates()}
+                disabled={isLoadingRates}
+              >
+                Refresh
+              </Button>
             </div>
           )}
         </CardContent>
@@ -341,7 +321,7 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value: number) => formatCurrency(value)}
+                    formatter={(value: number) => formatCurrency(value, currency)}
                   />
                   <Legend 
                     layout="vertical" 
@@ -391,13 +371,11 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
           ) : (
             <div className="space-y-2">
               {expenses.slice(0, 10).map((expense) => {
-                const config = expenseCategoryConfig[expense.category];
+                const config = expenseCategoryConfig[expense.category as ExpenseCategory];
                 const isMultiCurrency = expense.currency !== currency;
-                const convertedAmount = convertCurrency(
-                  Number(expense.amount),
-                  expense.currency || 'USD',
-                  currency
-                );
+                const convertedAmount = Object.keys(rates).length > 0
+                  ? convertCurrency(Number(expense.amount), expense.currency || 'USD', currency, rates)
+                  : Number(expense.amount);
 
                 return (
                   <div 
@@ -407,9 +385,21 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
                     <div className="flex items-center gap-3">
                       <span className="text-xl">{config?.emoji || '📦'}</span>
                       <div>
-                        <p className="font-medium text-sm">
-                          {expense.description || config?.label}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-sm">
+                            {expense.description || config?.label}
+                          </p>
+                          {expense.receipt_url && (
+                            <a 
+                              href={expense.receipt_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-teal hover:text-teal-dark"
+                            >
+                              <Receipt className="h-3.5 w-3.5" />
+                            </a>
+                          )}
+                        </div>
                         <p className="text-xs text-muted-foreground">
                           {new Date(expense.date).toLocaleDateString()}
                         </p>
@@ -422,7 +412,7 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
                         </span>
                         {isMultiCurrency && (
                           <span className="text-xs text-muted-foreground">
-                            ≈ {formatCurrency(convertedAmount)}
+                            ≈ {formatCurrency(convertedAmount, currency)}
                           </span>
                         )}
                       </div>
