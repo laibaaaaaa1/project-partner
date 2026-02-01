@@ -316,8 +316,13 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold">
-                        {formatCurrency(expense.amount)}
+                      <span className="font-semibold text-sm">
+                        {new Intl.NumberFormat('en-US', {
+                          style: 'currency',
+                          currency: expense.currency || currency,
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
+                        }).format(expense.amount)}
                       </span>
                       <Button
                         variant="ghost"
