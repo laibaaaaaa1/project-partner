@@ -96,6 +96,7 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
       amount: '',
       description: '',
       date: new Date().toISOString().split('T')[0],
+      currency: currency,
     });
     setIsDialogOpen(false);
   };
