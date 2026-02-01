@@ -86,7 +86,7 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
       trip_id: tripId,
       category: newExpense.category,
       amount: parseFloat(newExpense.amount),
-      currency,
+      currency: newExpense.currency,
       description: newExpense.description,
       date: newExpense.date,
     });
