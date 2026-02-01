@@ -41,7 +41,26 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
     amount: '',
     description: '',
     date: new Date().toISOString().split('T')[0],
+    currency: currency,
   });
+
+  const currencies = [
+    { code: 'USD', symbol: '$', name: 'US Dollar' },
+    { code: 'EUR', symbol: '€', name: 'Euro' },
+    { code: 'GBP', symbol: '£', name: 'British Pound' },
+    { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+    { code: 'CHF', symbol: 'Fr', name: 'Swiss Franc' },
+    { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+    { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+    { code: 'MXN', symbol: '$', name: 'Mexican Peso' },
+    { code: 'BRL', symbol: 'R$', name: 'Brazilian Real' },
+    { code: 'KRW', symbol: '₩', name: 'South Korean Won' },
+    { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
+    { code: 'THB', symbol: '฿', name: 'Thai Baht' },
+    { code: 'NZD', symbol: 'NZ$', name: 'New Zealand Dollar' },
+  ];
 
   const totalSpent = expenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
   const remaining = totalBudget - totalSpent;
