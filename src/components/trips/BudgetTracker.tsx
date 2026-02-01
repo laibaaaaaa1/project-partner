@@ -41,7 +41,26 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
     amount: '',
     description: '',
     date: new Date().toISOString().split('T')[0],
+    currency: currency,
   });
+
+  const currencies = [
+    { code: 'USD', symbol: '$', name: 'US Dollar' },
+    { code: 'EUR', symbol: '€', name: 'Euro' },
+    { code: 'GBP', symbol: '£', name: 'British Pound' },
+    { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+    { code: 'CHF', symbol: 'Fr', name: 'Swiss Franc' },
+    { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+    { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+    { code: 'MXN', symbol: '$', name: 'Mexican Peso' },
+    { code: 'BRL', symbol: 'R$', name: 'Brazilian Real' },
+    { code: 'KRW', symbol: '₩', name: 'South Korean Won' },
+    { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
+    { code: 'THB', symbol: '฿', name: 'Thai Baht' },
+    { code: 'NZD', symbol: 'NZ$', name: 'New Zealand Dollar' },
+  ];
 
   const totalSpent = expenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
   const remaining = totalBudget - totalSpent;
@@ -67,7 +86,7 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
       trip_id: tripId,
       category: newExpense.category,
       amount: parseFloat(newExpense.amount),
-      currency,
+      currency: newExpense.currency,
       description: newExpense.description,
       date: newExpense.date,
     });
@@ -77,6 +96,7 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
       amount: '',
       description: '',
       date: new Date().toISOString().split('T')[0],
+      currency: currency,
     });
     setIsDialogOpen(false);
   };
@@ -207,14 +227,34 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Amount ({currency})</Label>
-                    <Input
-                      type="number"
-                      placeholder="0.00"
-                      value={newExpense.amount}
-                      onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>Amount</Label>
+                      <Input
+                        type="number"
+                        placeholder="0.00"
+                        value={newExpense.amount}
+                        onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Currency</Label>
+                      <Select
+                        value={newExpense.currency}
+                        onValueChange={(value) => setNewExpense({ ...newExpense, currency: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {currencies.map((curr) => (
+                            <SelectItem key={curr.code} value={curr.code}>
+                              {curr.symbol} {curr.code}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Description (optional)</Label>
@@ -276,8 +316,13 @@ export function BudgetTracker({ tripId, totalBudget = 0, currency = 'USD' }: Bud
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold">
-                        {formatCurrency(expense.amount)}
+                      <span className="font-semibold text-sm">
+                        {new Intl.NumberFormat('en-US', {
+                          style: 'currency',
+                          currency: expense.currency || currency,
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
+                        }).format(expense.amount)}
                       </span>
                       <Button
                         variant="ghost"
