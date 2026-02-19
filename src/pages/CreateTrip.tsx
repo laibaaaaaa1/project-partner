@@ -48,6 +48,68 @@ const popularDestinations = [
   { name: "Santorini, Greece", image: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=200" },
 ];
 
+// Popular conversion targets to always show
+const conversionTargets = ['USD', 'EUR', 'GBP', 'PKR', 'JPY', 'INR', 'AUD', 'CAD'];
+
+function CurrencyConversions({ budget, baseCurrency }: { budget: number; baseCurrency: string }) {
+  const { data: ratesData, isLoading } = useExchangeRates(baseCurrency);
+  const rates = ratesData?.rates || {};
+
+  const conversions = useMemo(() => {
+    if (!Object.keys(rates).length) return [];
+    return conversionTargets
+      .filter(code => code !== baseCurrency)
+      .map(code => ({
+        code,
+        symbol: getCurrencySymbol(code),
+        name: currencies.find(c => c.code === code)?.name || code,
+        converted: convertCurrency(budget, baseCurrency, code, rates),
+        rate: rates[code] || 0,
+      }))
+      .filter(c => c.rate > 0);
+  }, [rates, budget, baseCurrency]);
+
+  if (isLoading) {
+    return (
+      <div className="p-4 rounded-xl bg-muted/50 border border-border flex items-center justify-center gap-2 text-muted-foreground text-sm">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Loading live rates...
+      </div>
+    );
+  }
+
+  if (!conversions.length) return null;
+
+  return (
+    <div className="rounded-xl bg-muted/50 border border-border overflow-hidden">
+      <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+        <ArrowRightLeft className="h-4 w-4 text-primary" />
+        <span className="text-sm font-semibold">Live Currency Conversions</span>
+        <span className="ml-auto text-xs text-muted-foreground">
+          {ratesData?.source === 'live' ? '● Live' : '○ Approx'}
+        </span>
+      </div>
+      <div className="divide-y divide-border">
+        {conversions.map(c => (
+          <div key={c.code} className="px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-base font-medium">{c.symbol}</span>
+              <div>
+                <p className="text-sm font-medium">{c.code}</p>
+                <p className="text-xs text-muted-foreground">{c.name}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-sm font-semibold">{formatCurrency(Math.round(c.converted), c.code)}</p>
+              <p className="text-xs text-muted-foreground">1 {baseCurrency} = {c.rate.toFixed(2)} {c.code}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function CreateTrip() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
