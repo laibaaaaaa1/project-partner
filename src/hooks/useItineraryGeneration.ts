@@ -91,7 +91,7 @@ Please respond ONLY with valid JSON in this exact format (no markdown, no code b
 
 Types for activities: "activity", "meal", "transport", "accommodation"
 
-Make the itinerary realistic with proper timing. Include meals, key attractions, local experiences, and rest time. Ensure costs roughly align with the total budget of $${params.budget} for ${params.travelers} travelers.`;
+Make the itinerary realistic with proper timing. Include meals, key attractions, local experiences, and rest time. Ensure costs are shown in ${currencyCode} and roughly align with the total budget of ${currencyCode} ${params.budget} for ${params.travelers} travelers.`;
 }
 
 function parseAIResponse(content: string): { days: ItineraryDay[]; packingList: string[]; tips: string[] } {
