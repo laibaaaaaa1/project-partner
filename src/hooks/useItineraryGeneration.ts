@@ -40,6 +40,7 @@ export interface TripParams {
   endDate: string;
   travelers: number;
   budget: number;
+  currency?: string;
   travelStyle: string;
 }
 
@@ -53,12 +54,15 @@ function calculateTripDays(startDate: string, endDate: string): number {
 function createItineraryPrompt(params: TripParams): string {
   const days = calculateTripDays(params.startDate, params.endDate);
 
+  const currencyCode = params.currency || 'USD';
+
   return `Generate a detailed ${days}-day travel itinerary for ${params.destination}.
 
 Trip Details:
 - Dates: ${params.startDate} to ${params.endDate} (${days} days)
 - Travelers: ${params.travelers} people
-- Budget: $${params.budget} total
+- Budget: ${currencyCode} ${params.budget} total
+- Currency: ${currencyCode}
 - Travel Style: ${params.travelStyle}
 
 Please respond ONLY with valid JSON in this exact format (no markdown, no code blocks, just raw JSON):
@@ -87,7 +91,7 @@ Please respond ONLY with valid JSON in this exact format (no markdown, no code b
 
 Types for activities: "activity", "meal", "transport", "accommodation"
 
-Make the itinerary realistic with proper timing. Include meals, key attractions, local experiences, and rest time. Ensure costs roughly align with the total budget of $${params.budget} for ${params.travelers} travelers.`;
+Make the itinerary realistic with proper timing. Include meals, key attractions, local experiences, and rest time. Ensure costs are shown in ${currencyCode} and roughly align with the total budget of ${currencyCode} ${params.budget} for ${params.travelers} travelers.`;
 }
 
 function parseAIResponse(content: string): { days: ItineraryDay[]; packingList: string[]; tips: string[] } {

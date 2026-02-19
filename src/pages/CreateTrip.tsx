@@ -11,7 +11,8 @@ import {
   Mountain,
   Crown,
   Tent,
-  Palette
+  Palette,
+  ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,14 @@ import { Slider } from "@/components/ui/slider";
 import { ROUTES } from "@/lib/routes";
 import { toast } from "sonner";
 import { useItineraryGeneration } from "@/hooks/useItineraryGeneration";
+import { currencies, getCurrencySymbol, formatCurrency } from "@/lib/currency";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const travelStyles = [
   { id: "adventure", label: "Adventure", icon: Mountain, description: "Hiking & exploration" },
@@ -47,6 +56,7 @@ export default function CreateTrip() {
   const [endDate, setEndDate] = useState("");
   const [travelers, setTravelers] = useState(2);
   const [budget, setBudget] = useState([2000]);
+  const [currency, setCurrency] = useState("USD");
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
 
   const totalSteps = 5;
@@ -75,6 +85,7 @@ export default function CreateTrip() {
       endDate,
       travelers,
       budget: budget[0],
+      currency,
       travelStyle: selectedStyle,
     });
 
@@ -95,9 +106,11 @@ export default function CreateTrip() {
     }
   };
 
-  const formatBudget = (value: number) => {
-    if (value >= 10000) return "$10,000+";
-    return `$${value.toLocaleString()}`;
+  const sym = getCurrencySymbol(currency);
+
+  const formatBudgetDisplay = (value: number) => {
+    if (value >= 10000) return `${sym}10,000+`;
+    return formatCurrency(value, currency);
   };
 
   const calculateDays = () => {
@@ -269,13 +282,30 @@ export default function CreateTrip() {
           <div className="space-y-8 animate-fade-in">
             <div className="space-y-2">
               <h1 className="font-display text-2xl font-bold">Budget</h1>
-              <p className="text-muted-foreground">Set your total trip budget</p>
+              <p className="text-muted-foreground">Set your total trip budget & currency</p>
             </div>
 
-            <div className="space-y-8 py-8">
+            {/* Currency Selector */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Currency</Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger className="h-12">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {currencies.map((curr) => (
+                    <SelectItem key={curr.code} value={curr.code}>
+                      {curr.symbol} {curr.code} — {curr.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-8 py-4">
               <div className="text-center">
                 <span className="text-5xl font-display font-bold text-primary">
-                  {formatBudget(budget[0])}
+                  {formatBudgetDisplay(budget[0])}
                 </span>
                 <p className="text-muted-foreground mt-2">total budget</p>
               </div>
@@ -290,8 +320,8 @@ export default function CreateTrip() {
               />
 
               <div className="flex justify-between text-sm text-muted-foreground">
-                <span>$500</span>
-                <span>$10,000+</span>
+                <span>{sym}500</span>
+                <span>{sym}10,000+</span>
               </div>
             </div>
 
@@ -300,7 +330,7 @@ export default function CreateTrip() {
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Per day average</span>
                   <span className="font-semibold">
-                    ~${Math.round(budget[0] / calculateDays()).toLocaleString()}/day
+                    ~{formatCurrency(Math.round(budget[0] / calculateDays()), currency)}/day
                   </span>
                 </div>
               </div>
@@ -354,7 +384,7 @@ export default function CreateTrip() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Budget</span>
-                  <span className="font-medium">{formatBudget(budget[0])}</span>
+                  <span className="font-medium">{formatBudgetDisplay(budget[0])} ({currency})</span>
                 </div>
               </div>
             </div>
