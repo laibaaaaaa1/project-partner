@@ -22,6 +22,14 @@ import { Slider } from "@/components/ui/slider";
 import { ROUTES } from "@/lib/routes";
 import { toast } from "sonner";
 import { useItineraryGeneration } from "@/hooks/useItineraryGeneration";
+import { currencies, getCurrencySymbol, formatCurrency } from "@/lib/currency";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const travelStyles = [
   { id: "adventure", label: "Adventure", icon: Mountain, description: "Hiking & exploration" },
