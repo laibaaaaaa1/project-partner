@@ -22,6 +22,7 @@ import { Slider } from "@/components/ui/slider";
 import { ROUTES } from "@/lib/routes";
 import { toast } from "sonner";
 import { useItineraryGeneration } from "@/hooks/useItineraryGeneration";
+import { useExchangeRates, convertCurrency } from "@/hooks/useExchangeRates";
 import { currencies, getCurrencySymbol, formatCurrency } from "@/lib/currency";
 import {
   Select,
