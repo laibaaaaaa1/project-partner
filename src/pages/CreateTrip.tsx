@@ -85,6 +85,7 @@ export default function CreateTrip() {
       endDate,
       travelers,
       budget: budget[0],
+      currency,
       travelStyle: selectedStyle,
     });
 
