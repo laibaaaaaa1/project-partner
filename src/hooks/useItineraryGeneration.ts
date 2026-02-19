@@ -61,7 +61,8 @@ function createItineraryPrompt(params: TripParams): string {
 Trip Details:
 - Dates: ${params.startDate} to ${params.endDate} (${days} days)
 - Travelers: ${params.travelers} people
-- Budget: $${params.budget} total
+- Budget: ${currencyCode} ${params.budget} total
+- Currency: ${currencyCode}
 - Travel Style: ${params.travelStyle}
 
 Please respond ONLY with valid JSON in this exact format (no markdown, no code blocks, just raw JSON):
