@@ -40,6 +40,7 @@ export interface TripParams {
   endDate: string;
   travelers: number;
   budget: number;
+  currency?: string;
   travelStyle: string;
 }
 
