@@ -282,13 +282,30 @@ export default function CreateTrip() {
           <div className="space-y-8 animate-fade-in">
             <div className="space-y-2">
               <h1 className="font-display text-2xl font-bold">Budget</h1>
-              <p className="text-muted-foreground">Set your total trip budget</p>
+              <p className="text-muted-foreground">Set your total trip budget & currency</p>
             </div>
 
-            <div className="space-y-8 py-8">
+            {/* Currency Selector */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Currency</Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger className="h-12">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {currencies.map((curr) => (
+                    <SelectItem key={curr.code} value={curr.code}>
+                      {curr.symbol} {curr.code} — {curr.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-8 py-4">
               <div className="text-center">
                 <span className="text-5xl font-display font-bold text-primary">
-                  {formatBudget(budget[0])}
+                  {formatBudgetDisplay(budget[0])}
                 </span>
                 <p className="text-muted-foreground mt-2">total budget</p>
               </div>
@@ -303,8 +320,8 @@ export default function CreateTrip() {
               />
 
               <div className="flex justify-between text-sm text-muted-foreground">
-                <span>$500</span>
-                <span>$10,000+</span>
+                <span>{sym}500</span>
+                <span>{sym}10,000+</span>
               </div>
             </div>
 
@@ -313,7 +330,7 @@ export default function CreateTrip() {
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Per day average</span>
                   <span className="font-semibold">
-                    ~${Math.round(budget[0] / calculateDays()).toLocaleString()}/day
+                    ~{formatCurrency(Math.round(budget[0] / calculateDays()), currency)}/day
                   </span>
                 </div>
               </div>
