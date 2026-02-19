@@ -56,6 +56,7 @@ export default function CreateTrip() {
   const [endDate, setEndDate] = useState("");
   const [travelers, setTravelers] = useState(2);
   const [budget, setBudget] = useState([2000]);
+  const [currency, setCurrency] = useState("USD");
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
 
   const totalSteps = 5;
