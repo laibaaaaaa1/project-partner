@@ -54,6 +54,8 @@ function calculateTripDays(startDate: string, endDate: string): number {
 function createItineraryPrompt(params: TripParams): string {
   const days = calculateTripDays(params.startDate, params.endDate);
 
+  const currencyCode = params.currency || 'USD';
+
   return `Generate a detailed ${days}-day travel itinerary for ${params.destination}.
 
 Trip Details:
