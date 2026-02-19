@@ -106,9 +106,11 @@ export default function CreateTrip() {
     }
   };
 
-  const formatBudget = (value: number) => {
-    if (value >= 10000) return "$10,000+";
-    return `$${value.toLocaleString()}`;
+  const sym = getCurrencySymbol(currency);
+
+  const formatBudgetDisplay = (value: number) => {
+    if (value >= 10000) return `${sym}10,000+`;
+    return formatCurrency(value, currency);
   };
 
   const calculateDays = () => {
