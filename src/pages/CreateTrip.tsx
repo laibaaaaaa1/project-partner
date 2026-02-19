@@ -384,7 +384,7 @@ export default function CreateTrip() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Budget</span>
-                  <span className="font-medium">{formatBudget(budget[0])}</span>
+                  <span className="font-medium">{formatBudgetDisplay(budget[0])} ({currency})</span>
                 </div>
               </div>
             </div>
