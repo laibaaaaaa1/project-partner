@@ -326,6 +326,9 @@ export default function CreateTrip() {
               </div>
             </div>
 
+            {/* Live Currency Conversions */}
+            <CurrencyConversions budget={budget[0]} baseCurrency={currency} />
+
             {calculateDays() > 0 && (
               <div className="p-4 rounded-xl bg-muted/50 border border-border">
                 <div className="flex items-center justify-between">
