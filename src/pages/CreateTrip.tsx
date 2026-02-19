@@ -80,28 +80,33 @@ function CurrencyConversions({ budget, baseCurrency }: { budget: number; baseCur
 
   if (!conversions.length) return null;
 
+  const baseSym = getCurrencySymbol(baseCurrency);
+
   return (
     <div className="rounded-xl bg-muted/50 border border-border overflow-hidden">
       <div className="px-4 py-3 border-b border-border flex items-center gap-2">
         <ArrowRightLeft className="h-4 w-4 text-primary" />
-        <span className="text-sm font-semibold">Live Currency Conversions</span>
+        <span className="text-sm font-semibold">{baseCurrency} to Other Currencies</span>
         <span className="ml-auto text-xs text-muted-foreground">
-          {ratesData?.source === 'live' ? '● Live' : '○ Approx'}
+          {ratesData?.source === 'live' ? '🟢 Live' : '🟡 Approx'}
         </span>
       </div>
       <div className="divide-y divide-border">
         {conversions.map(c => (
           <div key={c.code} className="px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-base font-medium">{c.symbol}</span>
-              <div>
-                <p className="text-sm font-medium">{c.code}</p>
-                <p className="text-xs text-muted-foreground">{c.name}</p>
-              </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                {baseCurrency} → {c.code}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                1 {baseCurrency} = {c.rate < 10 ? c.rate.toFixed(4) : c.rate.toFixed(2)} {c.code}
+              </p>
             </div>
             <div className="text-right">
-              <p className="text-sm font-semibold">{formatCurrency(Math.round(c.converted), c.code)}</p>
-              <p className="text-xs text-muted-foreground">1 {baseCurrency} = {c.rate.toFixed(2)} {c.code}</p>
+              <p className="text-sm font-bold text-primary">
+                {c.symbol} {c.converted.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </p>
+              <p className="text-xs text-muted-foreground">{c.name}</p>
             </div>
           </div>
         ))}
