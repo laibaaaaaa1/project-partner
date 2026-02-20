@@ -48,6 +48,7 @@ type SettingItem = {
   defaultValue?: boolean;
   options?: { value: string; label: string }[];
   description?: string;
+  route?: string;
 };
 
 type SettingSection = {
