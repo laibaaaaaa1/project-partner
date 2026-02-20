@@ -27,6 +27,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Offline = lazy(() => import("./pages/Offline"));
 const GeneratedItinerary = lazy(() => import("./pages/GeneratedItinerary"));
+const Feedback = lazy(() => import("./pages/Feedback"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
