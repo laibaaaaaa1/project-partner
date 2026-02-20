@@ -137,7 +137,7 @@ const settingsSections: SettingSection[] = [
     title: "Support",
     items: [
       { icon: HelpCircle, label: "Help Center", action: "navigate" },
-      { icon: MessageSquare, label: "Contact Support", action: "navigate" },
+      { icon: MessageSquare, label: "Send Feedback", action: "navigate", route: "/feedback" },
     ],
   },
 ];
