@@ -51,18 +51,20 @@ export interface ItineraryFeedback {
   created_at: string;
 }
 
+// Helper to query tables not yet in generated types
+const fromTable = (table: string) => supabase.from(table as any);
+
 // Trip Reviews
 export function useTripReviews() {
   const { user } = useAuth();
   return useQuery({
     queryKey: ["trip-reviews", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("trip_reviews")
+      const { data, error } = await fromTable("trip_reviews")
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as TripReview[];
+      return (data || []) as unknown as TripReview[];
     },
     enabled: !!user,
   });
@@ -72,7 +74,7 @@ export function useCreateTripReview() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (review: Omit<TripReview, "id" | "created_at" | "updated_at">) => {
-      const { data, error } = await supabase.from("trip_reviews").insert(review).select().single();
+      const { data, error } = await fromTable("trip_reviews").insert(review as any).select().single();
       if (error) throw error;
       return data;
     },
@@ -89,11 +91,11 @@ export function useDestinationReviews(destinationName?: string) {
   return useQuery({
     queryKey: ["destination-reviews", destinationName],
     queryFn: async () => {
-      let q = supabase.from("destination_reviews").select("*").order("created_at", { ascending: false });
+      let q = fromTable("destination_reviews").select("*").order("created_at", { ascending: false });
       if (destinationName) q = q.eq("destination_name", destinationName);
       const { data, error } = await q;
       if (error) throw error;
-      return data as DestinationReview[];
+      return (data || []) as unknown as DestinationReview[];
     },
   });
 }
@@ -102,7 +104,7 @@ export function useCreateDestinationReview() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (review: Omit<DestinationReview, "id" | "created_at" | "updated_at">) => {
-      const { data, error } = await supabase.from("destination_reviews").insert(review).select().single();
+      const { data, error } = await fromTable("destination_reviews").insert(review as any).select().single();
       if (error) throw error;
       return data;
     },
@@ -120,12 +122,11 @@ export function useAppFeedback() {
   return useQuery({
     queryKey: ["app-feedback", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("app_feedback")
+      const { data, error } = await fromTable("app_feedback")
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as AppFeedback[];
+      return (data || []) as unknown as AppFeedback[];
     },
     enabled: !!user,
   });
@@ -135,7 +136,7 @@ export function useCreateAppFeedback() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (feedback: Omit<AppFeedback, "id" | "created_at" | "status">) => {
-      const { data, error } = await supabase.from("app_feedback").insert(feedback).select().single();
+      const { data, error } = await fromTable("app_feedback").insert(feedback as any).select().single();
       if (error) throw error;
       return data;
     },
@@ -152,7 +153,7 @@ export function useCreateItineraryFeedback() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (feedback: Omit<ItineraryFeedback, "id" | "created_at">) => {
-      const { data, error } = await supabase.from("itinerary_feedback").insert(feedback).select().single();
+      const { data, error } = await fromTable("itinerary_feedback").insert(feedback as any).select().single();
       if (error) throw error;
       return data;
     },
