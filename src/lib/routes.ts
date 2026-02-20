@@ -15,6 +15,7 @@ export const ROUTES = {
   SETTINGS: "/settings",
   ITINERARY: "/itinerary/:tripId",
   GENERATED_ITINERARY: "/itinerary",
+  FEEDBACK: "/feedback",
   OFFLINE: "/offline",
 } as const;
 
