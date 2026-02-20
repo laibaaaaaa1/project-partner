@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Compass, Search, Sun, Sparkles, MessageCircle, ArrowRight, TrendingUp } from "lucide-react";
 import { MobileLayout, FloatingActionButton } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,19 @@ function getGreeting(): string {
   return "Good evening";
 }
 
+const container = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.1, delayChildren: 0.1 } },
+};
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } },
+};
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.4 } },
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
@@ -48,78 +62,93 @@ export default function Dashboard() {
     <MobileLayout
       headerTitle="TripTuner"
       headerActions={
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="min-w-touch min-h-touch"
-          onClick={() => navigate(ROUTES.DISCOVER)}
-        >
+        <Button variant="ghost" size="icon" className="min-w-touch min-h-touch" onClick={() => navigate(ROUTES.DISCOVER)}>
           <Search className="h-5 w-5" />
         </Button>
       }
     >
-      <div className="px-4 py-6 space-y-8">
+      <motion.div className="px-4 py-6 space-y-8" variants={container} initial="hidden" animate="visible">
         {/* Welcome Section */}
-        <div className="space-y-2 animate-fade-in">
+        <motion.div className="space-y-2" variants={fadeUp}>
           <h1 className="font-display text-2xl font-bold">
             {getGreeting()}! 👋
           </h1>
           <p className="text-muted-foreground">Where shall we go today?</p>
-        </div>
+        </motion.div>
 
         {/* Dynamic Weather Widget */}
-        <WeatherWidget location={currentLocation} />
+        <motion.div variants={fadeUp}>
+          <WeatherWidget location={currentLocation} />
+        </motion.div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-4">
-          <Button 
-            variant="outline" 
-            className="h-auto py-5 flex flex-col gap-2 border-2 hover:border-primary/50 transition-all"
-            onClick={() => navigate(ROUTES.CHAT)}
-          >
-            <div className="p-2 rounded-full bg-primary/10">
-              <MessageCircle className="h-5 w-5 text-primary" />
-            </div>
-            <span className="text-sm font-medium">Chat with AI</span>
-            <span className="text-xs text-muted-foreground">Get travel advice</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            className="h-auto py-5 flex flex-col gap-2 border-2 hover:border-primary/50 transition-all"
-            onClick={() => navigate(ROUTES.DISCOVER)}
-          >
-            <div className="p-2 rounded-full bg-secondary/10">
-              <Compass className="h-5 w-5 text-secondary" />
-            </div>
-            <span className="text-sm font-medium">Explore</span>
-            <span className="text-xs text-muted-foreground">Discover places</span>
-          </Button>
-        </div>
+        <motion.div className="grid grid-cols-2 gap-4" variants={fadeUp}>
+          <motion.div whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }}>
+            <Button
+              variant="outline"
+              className="w-full h-auto py-5 flex flex-col gap-2 border-2 hover:border-primary/50 hover:shadow-md transition-all"
+              onClick={() => navigate(ROUTES.CHAT)}
+            >
+              <motion.div
+                className="p-2 rounded-full bg-primary/10"
+                animate={{ rotate: [0, 5, -5, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <MessageCircle className="h-5 w-5 text-primary" />
+              </motion.div>
+              <span className="text-sm font-medium">Chat with AI</span>
+              <span className="text-xs text-muted-foreground">Get travel advice</span>
+            </Button>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }}>
+            <Button
+              variant="outline"
+              className="w-full h-auto py-5 flex flex-col gap-2 border-2 hover:border-secondary/50 hover:shadow-md transition-all"
+              onClick={() => navigate(ROUTES.DISCOVER)}
+            >
+              <motion.div
+                className="p-2 rounded-full bg-secondary/10"
+                animate={{ rotate: [0, -5, 5, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+              >
+                <Compass className="h-5 w-5 text-secondary" />
+              </motion.div>
+              <span className="text-sm font-medium">Explore</span>
+              <span className="text-xs text-muted-foreground">Discover places</span>
+            </Button>
+          </motion.div>
+        </motion.div>
 
         {/* Mood-Based Suggestions */}
-        <section className="space-y-4">
+        <motion.section className="space-y-4" variants={fadeUp}>
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-semibold">How are you feeling?</h2>
           </div>
           <div className="grid grid-cols-4 gap-2">
-            {moods.map((mood) => (
-              <MoodButton
+            {moods.map((mood, i) => (
+              <motion.div
                 key={mood.id}
-                icon={mood.icon}
-                label={mood.label}
-                selected={selectedMood === mood.id}
-                onClick={() => setSelectedMood(selectedMood === mood.id ? null : mood.id)}
-              />
+                variants={scaleIn}
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <MoodButton
+                  icon={mood.icon}
+                  label={mood.label}
+                  selected={selectedMood === mood.id}
+                  onClick={() => setSelectedMood(selectedMood === mood.id ? null : mood.id)}
+                />
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* Recommended Destinations */}
-        <section className="space-y-4">
+        <motion.section className="space-y-4" variants={fadeUp}>
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-semibold">
-              {selectedMood 
-                ? `${selectedMood.charAt(0).toUpperCase() + selectedMood.slice(1)} Escapes` 
+              {selectedMood
+                ? `${selectedMood.charAt(0).toUpperCase() + selectedMood.slice(1)} Escapes`
                 : "Recommended for You"
               }
             </h2>
@@ -128,7 +157,7 @@ export default function Dashboard() {
               <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
           </div>
-          
+
           {isLoading ? (
             <div className="grid grid-cols-2 gap-4">
               {[1, 2].map((i) => (
@@ -141,20 +170,29 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4">
-              {displayedDestinations.map((destination) => (
-                <DestinationCard
+              {displayedDestinations.map((destination, i) => (
+                <motion.div
                   key={destination.id}
-                  {...destination}
-                  onClick={() => navigate(generateRoute.destination(destination.id))}
-                />
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1, duration: 0.4 }}
+                  whileHover={{ y: -4 }}
+                >
+                  <DestinationCard
+                    {...destination}
+                    onClick={() => navigate(generateRoute.destination(destination.id))}
+                  />
+                </motion.div>
               ))}
             </div>
           )}
-        </section>
+        </motion.section>
 
         {/* Real Trips from Database */}
-        <TripsList maxItems={2} showViewAll />
-      </div>
+        <motion.div variants={fadeUp}>
+          <TripsList maxItems={2} showViewAll />
+        </motion.div>
+      </motion.div>
 
       <FloatingActionButton />
     </MobileLayout>
