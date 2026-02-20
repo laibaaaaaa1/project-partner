@@ -207,6 +207,54 @@ export type Database = {
           },
         ]
       }
+      itinerary_feedback: {
+        Row: {
+          accuracy_rating: number | null
+          comment: string | null
+          created_at: string
+          helpfulness_rating: number | null
+          id: string
+          rating: number
+          trip_id: string | null
+          user_id: string
+        }
+        Insert: {
+          accuracy_rating?: number | null
+          comment?: string | null
+          created_at?: string
+          helpfulness_rating?: number | null
+          id?: string
+          rating: number
+          trip_id?: string | null
+          user_id: string
+        }
+        Update: {
+          accuracy_rating?: number | null
+          comment?: string | null
+          created_at?: string
+          helpfulness_rating?: number | null
+          id?: string
+          rating?: number
+          trip_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itinerary_feedback_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "itinerary_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       packing_items: {
         Row: {
           category: string | null
