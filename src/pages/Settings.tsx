@@ -198,7 +198,7 @@ export default function Settings() {
               {section.items.map((item, index) => (
                 <div key={item.label}>
                   {index > 0 && <Separator />}
-                  <div className="flex items-center justify-between p-4">
+                  <div className="flex items-center justify-between p-4" onClick={() => item.route && navigate(item.route)} style={item.route ? { cursor: 'pointer' } : undefined}>
                     <div className="flex items-center gap-3 flex-1">
                       <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
                         <item.icon className="h-4 w-4 text-muted-foreground" />
