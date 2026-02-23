@@ -43,7 +43,14 @@ export default function Dashboard() {
   const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [displayedDestinations, setDisplayedDestinations] = useState(getRandomDestinations(4));
-  const [currentLocation] = useState("San Francisco");
+  const [currentLocation, setCurrentLocation] = useState(() => {
+    return localStorage.getItem("triptuner_weather_location") || "San Francisco";
+  });
+
+  const handleLocationChange = (loc: string) => {
+    setCurrentLocation(loc);
+    localStorage.setItem("triptuner_weather_location", loc);
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 500);
@@ -78,7 +85,7 @@ export default function Dashboard() {
 
         {/* Dynamic Weather Widget */}
         <motion.div variants={fadeUp}>
-          <WeatherWidget location={currentLocation} />
+          <WeatherWidget location={currentLocation} onLocationChange={handleLocationChange} />
         </motion.div>
 
         {/* Quick Actions */}
