@@ -85,7 +85,7 @@ export default function Dashboard() {
 
         {/* Dynamic Weather Widget */}
         <motion.div variants={fadeUp}>
-          <WeatherWidget location={currentLocation} />
+          <WeatherWidget location={currentLocation} onLocationChange={handleLocationChange} />
         </motion.div>
 
         {/* Quick Actions */}
