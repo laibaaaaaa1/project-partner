@@ -370,13 +370,15 @@ export default function GeneratedItinerary() {
                     createActivity.mutateAsync({
                       destination_id: dest.id,
                       title: act.title,
-                      description: act.description,
+                      description: act.description || null,
                       category: act.type === 'meal' ? 'food' : act.type === 'transport' ? 'transport' : act.type === 'accommodation' ? 'accommodation' : 'sightseeing',
                       location_name: act.location || null,
                       start_time: act.time ? `${day.date}T${act.time}:00` : null,
                       order_index: (day.day - 1) * 100 + idx,
                       cost: act.cost ? parseFloat(act.cost.replace(/[^0-9.]/g, '')) || null : null,
-                    })
+                      currency: 'USD',
+                      is_booked: false,
+                    } as any)
                   )
                 );
                 await Promise.all(activityPromises);
