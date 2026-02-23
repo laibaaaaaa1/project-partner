@@ -62,7 +62,7 @@ export function WeatherWidget({ location = "San Francisco", className }: Weather
         {getWeatherIcon(weather?.current.icon)}
       </div>
       <div className="flex-1">
-        <p className="font-medium">{weather?.location || location}</p>
+        <p className="font-medium">{weather?.current.condition || "Loading..."}</p>
         <div className="flex items-center gap-1 text-sm opacity-80">
           <MapPin className="h-3 w-3" />
           <span>{weather?.location || location}</span>
@@ -70,13 +70,10 @@ export function WeatherWidget({ location = "San Francisco", className }: Weather
       </div>
       <div className="text-right">
         <p className="text-2xl font-bold">{weather?.current.temp ?? "--"}°C</p>
-        <p className="text-xs opacity-80">{weather?.current.condition || "Loading..."}</p>
+        <p className="text-xs opacity-80">
+          💧 {weather?.current.humidity ?? "--"}% · 💨 {weather?.current.wind ?? "--"} km/h
+        </p>
       </div>
-      {weather?.current.icon && (
-        <div className="opacity-40">
-          <Cloud className="h-8 w-8" />
-        </div>
-      )}
     </div>
   );
 }
