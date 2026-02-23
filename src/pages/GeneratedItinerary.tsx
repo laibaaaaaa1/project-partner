@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, 
@@ -14,8 +15,10 @@ import {
   CheckSquare,
   Share2,
   Download,
-  Edit2
+  Edit2,
+  Loader2
 } from "lucide-react";
+import { useCreateTrip, useCreateDestination, useCreateActivity } from "@/hooks/useTrips";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +57,10 @@ export default function GeneratedItinerary() {
   const location = useLocation();
   const navigate = useNavigate();
   const itinerary = location.state?.itinerary as GeneratedItinerary | undefined;
+  const [isSaving, setIsSaving] = useState(false);
+  const createTrip = useCreateTrip();
+  const createDestination = useCreateDestination();
+  const createActivity = useCreateActivity();
 
   if (!itinerary) {
     return (
@@ -333,12 +340,67 @@ export default function GeneratedItinerary() {
           </Button>
           <Button 
             className="flex-1"
-            onClick={() => {
-              toast.success("Trip saved!");
-              navigate("/trips");
+            disabled={isSaving}
+            onClick={async () => {
+              if (!itinerary) return;
+              setIsSaving(true);
+              try {
+                // 1. Create the trip
+                const trip = await createTrip.mutateAsync({
+                  title: `Trip to ${itinerary.destination}`,
+                  description: `${itinerary.travelStyle} trip for ${itinerary.travelers} travelers`,
+                  start_date: itinerary.startDate,
+                  end_date: itinerary.endDate,
+                  budget: itinerary.budget,
+                  status: 'planned',
+                });
+
+                // 2. Create a destination
+                const dest = await createDestination.mutateAsync({
+                  trip_id: trip.id,
+                  name: itinerary.destination,
+                  start_date: itinerary.startDate,
+                  end_date: itinerary.endDate,
+                  order_index: 0,
+                });
+
+                // 3. Create activities from itinerary days
+                const activityPromises = itinerary.days.flatMap((day) =>
+                  day.activities.map((act, idx) =>
+                    createActivity.mutateAsync({
+                      destination_id: dest.id,
+                      title: act.title,
+                      description: act.description || null,
+                      category: act.type === 'meal' ? 'food' : act.type === 'transport' ? 'transport' : act.type === 'accommodation' ? 'accommodation' : 'sightseeing',
+                      location_name: act.location || null,
+                      start_time: act.time ? `${day.date}T${act.time}:00` : null,
+                      order_index: (day.day - 1) * 100 + idx,
+                      cost: act.cost ? parseFloat(act.cost.replace(/[^0-9.]/g, '')) || null : null,
+                      currency: 'USD',
+                      is_booked: false,
+                    } as any)
+                  )
+                );
+                await Promise.all(activityPromises);
+
+                toast.success("Trip saved to your trips!");
+                navigate(`/trip/${trip.id}`);
+              } catch (error) {
+                console.error("Failed to save trip:", error);
+                toast.error("Failed to save trip. Please try again.");
+              } finally {
+                setIsSaving(false);
+              }
             }}
           >
-            Save Trip
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Trip"
+            )}
           </Button>
         </div>
       </div>

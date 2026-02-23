@@ -287,6 +287,76 @@ export const travelServices: Record<string, TravelService> = {
     ],
     emergency: "112",
   },
+  "Morocco": {
+    country: "Morocco",
+    hotels: [
+      { name: "Booking.com", url: "https://www.booking.com", description: "Riads & hotels" },
+      { name: "Hotels.com", url: "https://www.hotels.com", description: "Reward program" },
+      { name: "Airbnb", url: "https://www.airbnb.com", description: "Authentic riad stays" },
+    ],
+    taxis: [
+      { name: "Careem", url: "https://www.careem.com", description: "Available in major cities" },
+      { name: "Roby", url: "https://roby.ma", description: "Moroccan ride app" },
+      { name: "Petit Taxi", phone: "+212-5-22-00-00-00", description: "Local metered taxis" },
+    ],
+    emergency: "19",
+  },
+  "South Africa": {
+    country: "South Africa",
+    hotels: [
+      { name: "Booking.com", url: "https://www.booking.com", description: "Wide SA selection" },
+      { name: "SafariNow", url: "https://www.safarinow.com", description: "Safari & lodge bookings" },
+      { name: "Hotels.com", url: "https://www.hotels.com", description: "Reward program" },
+    ],
+    taxis: [
+      { name: "Uber SA", url: "https://www.uber.com/za", description: "Available in major cities" },
+      { name: "Bolt", url: "https://bolt.eu", description: "Affordable rides" },
+      { name: "City Bug", phone: "+27-21-830-5050", description: "Cape Town taxi service" },
+    ],
+    emergency: "10111",
+  },
+  "New Zealand": {
+    country: "New Zealand",
+    hotels: [
+      { name: "Booking.com", url: "https://www.booking.com", description: "NZ hotels & lodges" },
+      { name: "Wotif", url: "https://www.wotif.co.nz", description: "NZ travel deals" },
+      { name: "Hotels.com", url: "https://www.hotels.com", description: "Reward program" },
+    ],
+    taxis: [
+      { name: "Uber NZ", url: "https://www.uber.com/nz", description: "Auckland & Wellington" },
+      { name: "Ola NZ", url: "https://www.olacabs.com/nz", description: "Ride-hailing" },
+      { name: "Green Cabs", phone: "+64-4-387-8787", description: "Eco-friendly taxis" },
+    ],
+    emergency: "111",
+  },
+  "Argentina": {
+    country: "Argentina",
+    hotels: [
+      { name: "Booking.com", url: "https://www.booking.com", description: "Wide selection" },
+      { name: "Despegar", url: "https://www.despegar.com.ar", description: "Latin America leader" },
+      { name: "Hotels.com", url: "https://www.hotels.com", description: "Reward program" },
+    ],
+    taxis: [
+      { name: "Uber Argentina", url: "https://www.uber.com/ar", description: "Buenos Aires & more" },
+      { name: "Cabify", url: "https://cabify.com", description: "Premium rides" },
+      { name: "Radio Taxi", phone: "+54-11-4923-7000", description: "Buenos Aires radio taxi" },
+    ],
+    emergency: "911",
+  },
+  "Canada": {
+    country: "Canada",
+    hotels: [
+      { name: "Booking.com", url: "https://www.booking.com", description: "Canadian hotels" },
+      { name: "Hotels.com", url: "https://www.hotels.com", description: "Reward program" },
+      { name: "Expedia", url: "https://www.expedia.ca", description: "Bundle deals" },
+    ],
+    taxis: [
+      { name: "Uber Canada", url: "https://www.uber.com/ca", description: "Available nationwide" },
+      { name: "Lyft", url: "https://www.lyft.com", description: "Major cities" },
+      { name: "Beck Taxi", phone: "+1-416-751-5555", description: "Toronto's largest taxi" },
+    ],
+    emergency: "911",
+  },
 };
 
 // Fallback for countries not in the list
