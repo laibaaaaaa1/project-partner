@@ -352,7 +352,7 @@ export default function GeneratedItinerary() {
                   start_date: itinerary.startDate,
                   end_date: itinerary.endDate,
                   budget: itinerary.budget,
-                  status: 'upcoming',
+                  status: 'planned',
                 });
 
                 // 2. Create a destination
