@@ -57,6 +57,10 @@ export default function GeneratedItinerary() {
   const location = useLocation();
   const navigate = useNavigate();
   const itinerary = location.state?.itinerary as GeneratedItinerary | undefined;
+  const [isSaving, setIsSaving] = useState(false);
+  const createTrip = useCreateTrip();
+  const createDestination = useCreateDestination();
+  const createActivity = useCreateActivity();
 
   if (!itinerary) {
     return (
