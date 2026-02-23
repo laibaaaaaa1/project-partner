@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, 
@@ -14,8 +15,10 @@ import {
   CheckSquare,
   Share2,
   Download,
-  Edit2
+  Edit2,
+  Loader2
 } from "lucide-react";
+import { useCreateTrip, useCreateDestination, useCreateActivity } from "@/hooks/useTrips";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
