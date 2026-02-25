@@ -111,12 +111,14 @@ export default function Landing() {
             ))}
           </motion.div>
 
-          {/* 3D Airplane */}
+          {/* 3D Airplane Scene */}
           <motion.div
-            className="w-full h-56 -mb-8"
-            variants={scaleIn}
+            className="w-full h-72 md:h-80 -mb-6 mt-2"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
           >
-            <Suspense fallback={<div className="w-full h-full" />}>
+            <Suspense fallback={<div className="w-full h-full flex items-center justify-center text-primary-foreground/50 text-sm">Loading 3D scene…</div>}>
               <AirplaneScene />
             </Suspense>
           </motion.div>
