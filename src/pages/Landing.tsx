@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Compass, Map, Sparkles, Brain, Wallet, CloudSun, ChevronLeft, ChevronRight, Globe, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/routes";
+
+const AirplaneScene = lazy(() => import("@/components/3d/AirplaneScene"));
 
 const features = [
   { icon: Brain, title: "AI-Powered Planning", description: "Get personalized itineraries crafted by AI based on your preferences and travel style." },
@@ -107,6 +109,16 @@ export default function Landing() {
                 <span className="text-xs font-medium">{item.label}</span>
               </motion.div>
             ))}
+          </motion.div>
+
+          {/* 3D Airplane */}
+          <motion.div
+            className="w-full h-56 -mb-8"
+            variants={scaleIn}
+          >
+            <Suspense fallback={<div className="w-full h-full" />}>
+              <AirplaneScene />
+            </Suspense>
           </motion.div>
         </motion.div>
       </div>
