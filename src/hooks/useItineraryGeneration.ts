@@ -42,6 +42,7 @@ export interface TripParams {
   budget: number;
   currency?: string;
   travelStyle: string;
+  weather?: string;
 }
 
 function calculateTripDays(startDate: string, endDate: string): number {
