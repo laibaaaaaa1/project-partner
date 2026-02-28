@@ -24,6 +24,7 @@ import { Slider } from "@/components/ui/slider";
 import { ROUTES } from "@/lib/routes";
 import { toast } from "sonner";
 import { useItineraryGeneration } from "@/hooks/useItineraryGeneration";
+import { useCreateTrip, useCreateDestination, useCreateActivity } from "@/hooks/useTrips";
 import { useExchangeRates, convertCurrency } from "@/hooks/useExchangeRates";
 import { currencies, getCurrencySymbol, formatCurrency } from "@/lib/currency";
 import {
@@ -119,6 +120,9 @@ export default function CreateTrip() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const { isGenerating, progress: generationProgress, generateItinerary } = useItineraryGeneration();
+  const createTrip = useCreateTrip();
+  const createDestination = useCreateDestination();
+  const createActivity = useCreateActivity();
   
   // Form state
   const [destination, setDestination] = useState("");
@@ -128,6 +132,7 @@ export default function CreateTrip() {
   const [budget, setBudget] = useState([2000]);
   const [currency, setCurrency] = useState("USD");
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const [weather, setWeather] = useState("");
 
   const totalSteps = 5;
   const stepProgress = (step / totalSteps) * 100;
@@ -149,6 +154,8 @@ export default function CreateTrip() {
   const handleGenerate = async () => {
     if (!selectedStyle) return;
     
+    console.log("[TripTuner] Starting trip generation and auto-save flow...");
+    
     const result = await generateItinerary({
       destination,
       startDate,
@@ -157,11 +164,60 @@ export default function CreateTrip() {
       budget: budget[0],
       currency,
       travelStyle: selectedStyle,
+      weather: weather || undefined,
     });
 
     if (result) {
-      toast.success("Itinerary generated successfully!");
-      navigate("/itinerary", { state: { itinerary: result } });
+      console.log("[TripTuner] Itinerary generated, now saving to database...");
+      
+      try {
+        // Auto-save to database
+        const trip = await createTrip.mutateAsync({
+          title: `Trip to ${result.destination}`,
+          description: `${result.travelStyle} trip for ${result.travelers} travelers${weather ? ` (Weather: ${weather})` : ''}`,
+          start_date: result.startDate,
+          end_date: result.endDate,
+          budget: result.budget,
+          currency: currency,
+          status: 'planned',
+        });
+        console.log("[TripTuner] Trip saved to DB with id:", trip.id);
+
+        const dest = await createDestination.mutateAsync({
+          trip_id: trip.id,
+          name: result.destination,
+          start_date: result.startDate,
+          end_date: result.endDate,
+          order_index: 0,
+        });
+        console.log("[TripTuner] Destination saved to DB with id:", dest.id);
+
+        const activityPromises = result.days.flatMap((day) =>
+          day.activities.map((act, idx) =>
+            createActivity.mutateAsync({
+              destination_id: dest.id,
+              title: act.title,
+              description: act.description || null,
+              category: act.type === 'meal' ? 'food' : act.type === 'transport' ? 'transport' : act.type === 'accommodation' ? 'accommodation' : 'sightseeing',
+              location_name: act.location || null,
+              start_time: act.time ? `${day.date}T${act.time}:00` : null,
+              order_index: (day.day - 1) * 100 + idx,
+              cost: act.cost ? parseFloat(act.cost.replace(/[^0-9.]/g, '')) || null : null,
+              currency: currency,
+              is_booked: false,
+            } as any)
+          )
+        );
+        await Promise.all(activityPromises);
+        console.log("[TripTuner] All activities saved to DB. Total:", activityPromises.length);
+
+        toast.success("Trip generated and saved to your trips!");
+        navigate(`/trip/${trip.id}`);
+      } catch (error) {
+        console.error("[TripTuner] Failed to auto-save trip to DB:", error);
+        toast.error("Trip generated but failed to save. You can save it manually.");
+        navigate("/itinerary", { state: { itinerary: result } });
+      }
     }
   };
 
@@ -439,6 +495,21 @@ export default function CreateTrip() {
               ))}
             </div>
 
+            {/* Weather Input */}
+            <div className="space-y-2">
+              <Label htmlFor="weather" className="text-sm font-medium">Expected Weather (optional)</Label>
+              <Input
+                id="weather"
+                placeholder="e.g., Rain, Hot (38°C), Snow, Sunny"
+                className="h-12"
+                value={weather}
+                onChange={(e) => setWeather(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                AI will adapt your itinerary based on weather conditions
+              </p>
+            </div>
+
             {/* Summary */}
             <div className="mt-8 p-4 rounded-xl bg-muted/50 border border-border space-y-3">
               <h3 className="font-semibold">Trip Summary</h3>
@@ -459,6 +530,12 @@ export default function CreateTrip() {
                   <span className="text-muted-foreground">Budget</span>
                   <span className="font-medium">{formatBudgetDisplay(budget[0])} ({currency})</span>
                 </div>
+                {weather && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Weather</span>
+                    <span className="font-medium">{weather}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
