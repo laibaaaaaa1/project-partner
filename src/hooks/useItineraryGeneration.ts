@@ -51,10 +51,36 @@ function calculateTripDays(startDate: string, endDate: string): number {
   ) + 1;
 }
 
-function createItineraryPrompt(params: TripParams): string {
+function createItineraryPrompt(params: TripParams & { weather?: string }): string {
   const days = calculateTripDays(params.startDate, params.endDate);
 
   const currencyCode = params.currency || 'USD';
+
+  // Weather-adaptive instructions
+  let weatherInstructions = '';
+  if (params.weather) {
+    const w = params.weather.toLowerCase();
+    if (w.includes('rain') || w.includes('storm') || w.includes('shower')) {
+      weatherInstructions = `\n\nWEATHER ADAPTATION (Rain/Storms expected):
+- Prioritize INDOOR activities: museums, galleries, cooking classes, shopping, spas, indoor markets
+- Schedule outdoor activities only during likely dry windows (early morning)
+- Include backup indoor alternatives for any outdoor plans
+- Suggest waterproof gear in packing list`;
+    } else if (w.includes('hot') || w.includes('heat') || w.includes('35') || w.includes('40') || parseFloat(w) > 35) {
+      weatherInstructions = `\n\nWEATHER ADAPTATION (Extreme heat expected, >35°C):
+- Schedule outdoor activities in EARLY MORNING (before 10am) or EVENING (after 5pm)
+- Midday (11am-4pm): suggest indoor/shaded activities like museums, malls, restaurants
+- Include hydration reminders and sun protection tips
+- Recommend light, breathable clothing in packing list`;
+    } else if (w.includes('snow') || w.includes('cold') || w.includes('freez')) {
+      weatherInstructions = `\n\nWEATHER ADAPTATION (Cold/Snow expected):
+- Include winter activities: skiing, snowboarding, ice skating, hot springs
+- Recommend warm indoor activities during coldest hours
+- Suggest thermal/layered clothing in packing list`;
+    } else {
+      weatherInstructions = `\n\nWeather forecast: ${params.weather}. Adapt activities accordingly.`;
+    }
+  }
 
   return `Generate a detailed ${days}-day travel itinerary for ${params.destination}.
 
@@ -63,7 +89,7 @@ Trip Details:
 - Travelers: ${params.travelers} people
 - Budget: ${currencyCode} ${params.budget} total
 - Currency: ${currencyCode}
-- Travel Style: ${params.travelStyle}
+- Travel Style: ${params.travelStyle}${weatherInstructions}
 
 Please respond ONLY with valid JSON in this exact format (no markdown, no code blocks, just raw JSON):
 {
@@ -86,7 +112,8 @@ Please respond ONLY with valid JSON in this exact format (no markdown, no code b
     }
   ],
   "packingList": ["Item 1", "Item 2"],
-  "tips": ["Tip 1", "Tip 2"]
+  "tips": ["Tip 1", "Tip 2"],
+  "weatherAdaptation": "${params.weather || 'none'}"
 }
 
 Types for activities: "activity", "meal", "transport", "accommodation"
