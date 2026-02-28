@@ -120,6 +120,9 @@ export default function CreateTrip() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const { isGenerating, progress: generationProgress, generateItinerary } = useItineraryGeneration();
+  const createTrip = useCreateTrip();
+  const createDestination = useCreateDestination();
+  const createActivity = useCreateActivity();
   
   // Form state
   const [destination, setDestination] = useState("");
@@ -129,6 +132,7 @@ export default function CreateTrip() {
   const [budget, setBudget] = useState([2000]);
   const [currency, setCurrency] = useState("USD");
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const [weather, setWeather] = useState("");
 
   const totalSteps = 5;
   const stepProgress = (step / totalSteps) * 100;
@@ -150,6 +154,8 @@ export default function CreateTrip() {
   const handleGenerate = async () => {
     if (!selectedStyle) return;
     
+    console.log("[TripTuner] Starting trip generation and auto-save flow...");
+    
     const result = await generateItinerary({
       destination,
       startDate,
@@ -158,11 +164,60 @@ export default function CreateTrip() {
       budget: budget[0],
       currency,
       travelStyle: selectedStyle,
+      weather: weather || undefined,
     });
 
     if (result) {
-      toast.success("Itinerary generated successfully!");
-      navigate("/itinerary", { state: { itinerary: result } });
+      console.log("[TripTuner] Itinerary generated, now saving to database...");
+      
+      try {
+        // Auto-save to database
+        const trip = await createTrip.mutateAsync({
+          title: `Trip to ${result.destination}`,
+          description: `${result.travelStyle} trip for ${result.travelers} travelers${weather ? ` (Weather: ${weather})` : ''}`,
+          start_date: result.startDate,
+          end_date: result.endDate,
+          budget: result.budget,
+          currency: currency,
+          status: 'planned',
+        });
+        console.log("[TripTuner] Trip saved to DB with id:", trip.id);
+
+        const dest = await createDestination.mutateAsync({
+          trip_id: trip.id,
+          name: result.destination,
+          start_date: result.startDate,
+          end_date: result.endDate,
+          order_index: 0,
+        });
+        console.log("[TripTuner] Destination saved to DB with id:", dest.id);
+
+        const activityPromises = result.days.flatMap((day) =>
+          day.activities.map((act, idx) =>
+            createActivity.mutateAsync({
+              destination_id: dest.id,
+              title: act.title,
+              description: act.description || null,
+              category: act.type === 'meal' ? 'food' : act.type === 'transport' ? 'transport' : act.type === 'accommodation' ? 'accommodation' : 'sightseeing',
+              location_name: act.location || null,
+              start_time: act.time ? `${day.date}T${act.time}:00` : null,
+              order_index: (day.day - 1) * 100 + idx,
+              cost: act.cost ? parseFloat(act.cost.replace(/[^0-9.]/g, '')) || null : null,
+              currency: currency,
+              is_booked: false,
+            } as any)
+          )
+        );
+        await Promise.all(activityPromises);
+        console.log("[TripTuner] All activities saved to DB. Total:", activityPromises.length);
+
+        toast.success("Trip generated and saved to your trips!");
+        navigate(`/trip/${trip.id}`);
+      } catch (error) {
+        console.error("[TripTuner] Failed to auto-save trip to DB:", error);
+        toast.error("Trip generated but failed to save. You can save it manually.");
+        navigate("/itinerary", { state: { itinerary: result } });
+      }
     }
   };
 
