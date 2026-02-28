@@ -495,6 +495,21 @@ export default function CreateTrip() {
               ))}
             </div>
 
+            {/* Weather Input */}
+            <div className="space-y-2">
+              <Label htmlFor="weather" className="text-sm font-medium">Expected Weather (optional)</Label>
+              <Input
+                id="weather"
+                placeholder="e.g., Rain, Hot (38°C), Snow, Sunny"
+                className="h-12"
+                value={weather}
+                onChange={(e) => setWeather(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                AI will adapt your itinerary based on weather conditions
+              </p>
+            </div>
+
             {/* Summary */}
             <div className="mt-8 p-4 rounded-xl bg-muted/50 border border-border space-y-3">
               <h3 className="font-semibold">Trip Summary</h3>
@@ -515,6 +530,12 @@ export default function CreateTrip() {
                   <span className="text-muted-foreground">Budget</span>
                   <span className="font-medium">{formatBudgetDisplay(budget[0])} ({currency})</span>
                 </div>
+                {weather && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Weather</span>
+                    <span className="font-medium">{weather}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
