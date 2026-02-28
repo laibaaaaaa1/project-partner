@@ -155,10 +155,13 @@ export function useItineraryGeneration() {
     setIsGenerating(true);
     setProgress(10);
 
+    console.log("[TripTuner] Starting itinerary generation with params:", JSON.stringify(params, null, 2));
+
     try {
       const prompt = createItineraryPrompt(params);
       
       setProgress(20);
+      console.log("[TripTuner] Sending request to AI gateway...");
 
       const response = await fetch(EDGE_FUNCTIONS.travelChat, {
         method: "POST",
@@ -173,6 +176,7 @@ export function useItineraryGeneration() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error("[TripTuner] AI gateway error:", response.status, errorData);
         
         if (response.status === 429) {
           throw new Error("Rate limit exceeded. Please wait a moment and try again.");
@@ -218,7 +222,6 @@ export function useItineraryGeneration() {
             const content = parsed.choices?.[0]?.delta?.content;
             if (content) {
               fullContent += content;
-              // Update progress based on content length
               setProgress(Math.min(40 + Math.floor(fullContent.length / 50), 85));
             }
           } catch {
@@ -246,6 +249,7 @@ export function useItineraryGeneration() {
       }
 
       setProgress(90);
+      console.log("[TripTuner] AI response received, parsing itinerary...");
 
       const parsedItinerary = parseAIResponse(fullContent);
       const totalDays = calculateTripDays(params.startDate, params.endDate);
@@ -265,9 +269,10 @@ export function useItineraryGeneration() {
 
       setProgress(100);
       setItinerary(result);
+      console.log("[TripTuner] Itinerary generated successfully:", result.days.length, "days,", result.days.reduce((a, d) => a + d.activities.length, 0), "activities");
       return result;
     } catch (error) {
-      console.error("Itinerary generation error:", error);
+      console.error("[TripTuner] Itinerary generation error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to generate itinerary");
       return null;
     } finally {
