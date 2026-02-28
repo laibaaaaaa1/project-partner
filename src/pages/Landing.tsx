@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/routes";
 
-const AirplaneScene = lazy(() => import("@/components/3d/AirplaneScene"));
+
 
 const features = [
   { icon: Brain, title: "AI-Powered Planning", description: "Get personalized itineraries crafted by AI based on your preferences and travel style." },
