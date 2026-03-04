@@ -168,56 +168,9 @@ export default function CreateTrip() {
     });
 
     if (result) {
-      console.log("[TripTuner] Itinerary generated, now saving to database...");
-      
-      try {
-        // Auto-save to database
-        const trip = await createTrip.mutateAsync({
-          title: `Trip to ${result.destination}`,
-          description: `${result.travelStyle} trip for ${result.travelers} travelers${weather ? ` (Weather: ${weather})` : ''}`,
-          start_date: result.startDate,
-          end_date: result.endDate,
-          budget: result.budget,
-          currency: currency,
-          status: 'planned',
-        });
-        console.log("[TripTuner] Trip saved to DB with id:", trip.id);
-
-        const dest = await createDestination.mutateAsync({
-          trip_id: trip.id,
-          name: result.destination,
-          start_date: result.startDate,
-          end_date: result.endDate,
-          order_index: 0,
-        });
-        console.log("[TripTuner] Destination saved to DB with id:", dest.id);
-
-        const activityPromises = result.days.flatMap((day) =>
-          day.activities.map((act, idx) =>
-            createActivity.mutateAsync({
-              destination_id: dest.id,
-              title: act.title,
-              description: act.description || null,
-              category: act.type === 'meal' ? 'food' : act.type === 'transport' ? 'transport' : act.type === 'accommodation' ? 'accommodation' : 'sightseeing',
-              location_name: act.location || null,
-              start_time: act.time ? `${day.date}T${act.time}:00` : null,
-              order_index: (day.day - 1) * 100 + idx,
-              cost: act.cost ? parseFloat(act.cost.replace(/[^0-9.]/g, '')) || null : null,
-              currency: currency,
-              is_booked: false,
-            } as any)
-          )
-        );
-        await Promise.all(activityPromises);
-        console.log("[TripTuner] All activities saved to DB. Total:", activityPromises.length);
-
-        toast.success("Trip generated and saved to your trips!");
-        navigate(`/trip/${trip.id}`);
-      } catch (error) {
-        console.error("[TripTuner] Failed to auto-save trip to DB:", error);
-        toast.error("Trip generated but failed to save. You can save it manually.");
-        navigate("/itinerary", { state: { itinerary: result } });
-      }
+      console.log("[TripTuner] Itinerary generated, navigating to preview for review...");
+      toast.success("Itinerary generated! Review and save when ready.");
+      navigate("/itinerary", { state: { itinerary: result, currency } });
     }
   };
 
