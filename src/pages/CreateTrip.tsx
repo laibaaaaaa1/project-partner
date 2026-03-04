@@ -121,8 +121,6 @@ export default function CreateTrip() {
   const [step, setStep] = useState(1);
   const { isGenerating, progress: generationProgress, generateItinerary } = useItineraryGeneration();
   const createTrip = useCreateTrip();
-  const createDestination = useCreateDestination();
-  const createActivity = useCreateActivity();
   
   // Form state
   const [destination, setDestination] = useState("");
