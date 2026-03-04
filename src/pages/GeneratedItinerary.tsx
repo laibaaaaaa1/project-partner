@@ -59,6 +59,7 @@ export default function GeneratedItinerary() {
   const itinerary = location.state?.itinerary as GeneratedItinerary | undefined;
   const tripCurrency = (location.state?.currency as string) || 'USD';
   const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const createTrip = useCreateTrip();
   const createDestination = useCreateDestination();
   const createActivity = useCreateActivity();
