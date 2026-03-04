@@ -342,7 +342,7 @@ export default function GeneratedItinerary() {
           </Button>
           <Button 
             className="flex-1"
-            disabled={isSaving}
+            disabled={isSaving || isSaved}
             onClick={async () => {
               if (!itinerary) return;
               setIsSaving(true);
@@ -353,10 +353,11 @@ export default function GeneratedItinerary() {
                   description: `${itinerary.travelStyle} trip for ${itinerary.travelers} travelers`,
                   start_date: itinerary.startDate,
                   end_date: itinerary.endDate,
-                 budget: itinerary.budget,
+                  budget: itinerary.budget,
                   currency: tripCurrency,
                   status: 'planned',
                 });
+                console.log('Trip created:', trip);
 
                 // 2. Create a destination
                 const dest = await createDestination.mutateAsync({
@@ -366,6 +367,7 @@ export default function GeneratedItinerary() {
                   end_date: itinerary.endDate,
                   order_index: 0,
                 });
+                console.log('Destination created:', dest);
 
                 // 3. Create activities from itinerary days
                 const activityPromises = itinerary.days.flatMap((day) =>
@@ -384,10 +386,14 @@ export default function GeneratedItinerary() {
                     } as any)
                   )
                 );
-                await Promise.all(activityPromises);
+                const activities = await Promise.all(activityPromises);
+                console.log('Activities created:', activities);
 
-                toast.success("Trip saved to your trips!");
-                navigate(`/trip/${trip.id}`);
+                setIsSaved(true);
+                toast.success("Trip saved successfully to your trips!");
+                
+                // Navigate after a short delay so user sees the success state
+                setTimeout(() => navigate(`/trip/${trip.id}`), 1200);
               } catch (error) {
                 console.error("Failed to save trip:", error);
                 toast.error("Failed to save trip. Please try again.");
@@ -400,6 +406,11 @@ export default function GeneratedItinerary() {
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Saving...
+              </>
+            ) : isSaved ? (
+              <>
+                <CheckSquare className="h-4 w-4 mr-2" />
+                Saved!
               </>
             ) : (
               "Save Trip"
