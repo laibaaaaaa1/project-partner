@@ -59,10 +59,67 @@ export default function GeneratedItinerary() {
   const itinerary = location.state?.itinerary as GeneratedItinerary | undefined;
   const tripCurrency = (location.state?.currency as string) || 'USD';
   const [isSaving, setIsSaving] = useState(false);
+  const [savingType, setSavingType] = useState<'draft' | 'planned' | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const createTrip = useCreateTrip();
   const createDestination = useCreateDestination();
   const createActivity = useCreateActivity();
+
+  const handleSave = async (status: 'draft' | 'planned') => {
+    if (!itinerary) return;
+    setIsSaving(true);
+    setSavingType(status);
+    try {
+      const trip = await createTrip.mutateAsync({
+        title: `Trip to ${itinerary.destination}`,
+        description: `${itinerary.travelStyle} trip for ${itinerary.travelers} travelers`,
+        start_date: itinerary.startDate,
+        end_date: itinerary.endDate,
+        budget: itinerary.budget,
+        currency: tripCurrency,
+        status,
+      });
+      console.log('Trip created:', trip);
+
+      const dest = await createDestination.mutateAsync({
+        trip_id: trip.id,
+        name: itinerary.destination,
+        start_date: itinerary.startDate,
+        end_date: itinerary.endDate,
+        order_index: 0,
+      });
+      console.log('Destination created:', dest);
+
+      const activityPromises = itinerary.days.flatMap((day) =>
+        day.activities.map((act, idx) =>
+          createActivity.mutateAsync({
+            destination_id: dest.id,
+            title: act.title,
+            description: act.description || null,
+            category: act.type === 'meal' ? 'food' : act.type === 'transport' ? 'transport' : act.type === 'accommodation' ? 'accommodation' : 'sightseeing',
+            location_name: act.location || null,
+            start_time: act.time ? `${day.date}T${act.time}:00` : null,
+            order_index: (day.day - 1) * 100 + idx,
+            cost: act.cost ? parseFloat(act.cost.replace(/[^0-9.]/g, '')) || null : null,
+            currency: tripCurrency,
+            is_booked: false,
+          } as any)
+        )
+      );
+      const activities = await Promise.all(activityPromises);
+      console.log('Activities created:', activities);
+
+      setIsSaved(true);
+      toast.success(status === 'draft' ? "Saved as draft!" : "Trip saved successfully!");
+      setTimeout(() => navigate(`/trip/${trip.id}`), 1200);
+    } catch (error) {
+      console.error("Failed to save trip:", error);
+      toast.error("Failed to save trip. Please try again.");
+    } finally {
+      setIsSaving(false);
+      setSavingType(null);
+    }
+  };
 
   if (!itinerary) {
     return (
