@@ -57,6 +57,7 @@ export default function GeneratedItinerary() {
   const location = useLocation();
   const navigate = useNavigate();
   const itinerary = location.state?.itinerary as GeneratedItinerary | undefined;
+  const tripCurrency = (location.state?.currency as string) || 'USD';
   const [isSaving, setIsSaving] = useState(false);
   const createTrip = useCreateTrip();
   const createDestination = useCreateDestination();
@@ -351,7 +352,8 @@ export default function GeneratedItinerary() {
                   description: `${itinerary.travelStyle} trip for ${itinerary.travelers} travelers`,
                   start_date: itinerary.startDate,
                   end_date: itinerary.endDate,
-                  budget: itinerary.budget,
+                 budget: itinerary.budget,
+                  currency: tripCurrency,
                   status: 'planned',
                 });
 
@@ -376,7 +378,7 @@ export default function GeneratedItinerary() {
                       start_time: act.time ? `${day.date}T${act.time}:00` : null,
                       order_index: (day.day - 1) * 100 + idx,
                       cost: act.cost ? parseFloat(act.cost.replace(/[^0-9.]/g, '')) || null : null,
-                      currency: 'USD',
+                      currency: tripCurrency,
                       is_booked: false,
                     } as any)
                   )
